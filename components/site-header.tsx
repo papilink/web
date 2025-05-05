@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { Search, ShoppingCart, Menu } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -55,6 +56,13 @@ export default function SiteHeader() {
         {/* Navegación de escritorio */}
         <div className="mr-4 hidden md:flex">
           <Link href="/" className="mr-6 flex items-center space-x-2">
+            <Image 
+              src="/images/iconolulaweb.png"
+              alt="Lulaweb Logo"
+              width={32}
+              height={32}
+              className="rounded-lg"
+            />
             <span className="font-bold text-xl">{siteConfig.name}</span>
           </Link>
           <nav className="flex items-center space-x-6 text-sm font-medium">
@@ -80,7 +88,14 @@ export default function SiteHeader() {
         </button>
 
         {/* Logo móvil */}
-        <Link href="/" className="mr-6 flex items-center md:hidden">
+        <Link href="/" className="mr-6 flex items-center md:hidden gap-2">
+          <Image 
+            src="/images/iconolulaweb.png"
+            alt="Lulaweb Logo"
+            width={28}
+            height={28}
+            className="rounded-lg"
+          />
           <span className="font-bold text-xl">{siteConfig.name}</span>
         </Link>
 

@@ -38,7 +38,7 @@ const initialProducts: Product[] = [
     price: 585.5,
     description: "Computadora de escritorio HP con monitor incluido. Lista para usar.",
     image: "/images/lava10.jpg",
-    category: "computadoras",
+    category: "computadora PC",
     stock: 2
   },
   {
@@ -52,20 +52,11 @@ const initialProducts: Product[] = [
   },
   {
     id: 5,
-    name: "Impresora Multifunción",
-    price: 175.0,
-    description: "Impresora láser multifunción. Imprime, escanea y fotocopia.",
-    image: "/images/lava10.jpg",
-    category: "varios",
-    stock: 4
-  },
-  {
-    id: 6,
     name: "Monitor Gaming",
     price: 240.0,
     description: "Monitor gaming de 24 pulgadas, 144Hz. Ideal para juegos.",
     image: "/images/lava10.jpg",
-    category: "computadoras",
+    category: "computadora PC",
     stock: 1
   }
 ]

@@ -106,12 +106,12 @@ const categories = [
     description: "Laptops y notebooks de todas las marcas",
   },
   {
-    name: "Computadoras",
-    value: "computadoras",
+    name: "Computadora PC",
+    value: "computadora PC",
     description: "PCs de escritorio y componentes",
   },
   {
-    name: "Artículos Varios",
+    name: "Varios",
     value: "varios",
     description: "Productos variados en ocasión",
   }

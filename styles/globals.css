@@ -17,6 +17,8 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  background-color: #1a1b2e;  /* Azul noche */
+  color: #ffffff;  /* Texto en blanco para mejor contraste */
 }
 
 /* Ajustes tipográficos generales */

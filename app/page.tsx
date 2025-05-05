@@ -196,9 +196,18 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center space-y-4"
           >
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
-              Lula<span className="text-primary">web</span>
-            </h1>
+            <div className="flex items-center justify-center gap-3">
+              <Image 
+                src="/images/iconolulaweb.png"
+                alt="Lulaweb Logo"
+                width={50}
+                height={50}
+                className="rounded-lg"
+              />
+              <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+                Lula<span className="text-primary">web</span>
+              </h1>
+            </div>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Descubre piezas únicas en nuestra venta de garage con estilo
             </p>
@@ -217,7 +226,7 @@ export default function Home() {
           {/* Filtros y Ordenamiento */}
           <div className="flex flex-wrap gap-4 items-center justify-between mb-8">
             <div className="flex gap-2">
-              {["todos", "muebles", "iluminación", "decoración"].map((category) => (
+              {["todos", "lavarropas", "notebooks", "computadora PC", "varios"].map((category) => (
                 <Button
                   key={category}
                   variant={filterCategory === category ? "default" : "outline"}
