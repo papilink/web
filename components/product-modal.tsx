@@ -2,14 +2,17 @@
 
 import { useEffect } from "react"
 import Image from "next/image"
-import { X } from "lucide-react"
+import { X, ShoppingCart } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import ChatInterface from "@/components/chat-interface"
 import HeartIconButton from "@/components/heart-icon-button"
+import { useCart } from "@/components/cart-provider"
 
 export default function ProductModal({ product, isOpen, onClose }) {
+  const { addToCart } = useCart()
+
   // Cerrar el modal con la tecla Escape
   useEffect(() => {
     const handleEscape = (e) => {
@@ -62,8 +65,16 @@ export default function ProductModal({ product, isOpen, onClose }) {
                 <p className="text-gray-700">{product.description}</p>
               </div>
 
-              <div className="mt-auto">
-                <Button className="w-full" size="lg">
+              <div className="mt-auto space-y-4">
+                <Button 
+                  className="w-full" 
+                  size="lg" 
+                  onClick={() => addToCart(product.id)}
+                >
+                  <ShoppingCart className="h-5 w-5 mr-2" />
+                  Agregar al carrito
+                </Button>
+                <Button variant="outline" className="w-full" size="lg">
                   Contactar para comprar
                 </Button>
               </div>

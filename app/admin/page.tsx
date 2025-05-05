@@ -3,8 +3,8 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-// Añadir el import para el nuevo ícono de Video
 import { Plus, Trash2, Upload, Database, Video } from "lucide-react"
+import { ChangeEvent, FormEvent } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -24,21 +24,21 @@ const initialProducts = [
     price: 45.99,
     description:
       "Lámpara de mesa vintage en excelente estado. Perfecta para dar un toque elegante a cualquier habitación.",
-    image: "/placeholder.svg?height=400&width=400",
+    image: "/images/lava10.jpg",
   },
   {
     id: 2,
     name: "Silla de Diseñador",
     price: 120.0,
     description: "Silla de diseñador en madera y cuero. Muy cómoda y en perfecto estado.",
-    image: "/placeholder.svg?height=400&width=400",
+    image: "/images/lava10.jpg",
   },
   {
     id: 3,
     name: "Mesa de Centro",
     price: 85.5,
     description: "Mesa de centro de cristal con base de madera. Elegante y funcional.",
-    image: "/placeholder.svg?height=400&width=400",
+    image: "/images/lava10.jpg",
   },
 ]
 
@@ -48,13 +48,13 @@ export default function AdminPage() {
     name: "",
     price: "",
     description: "",
-    image: "/placeholder.svg?height=400&width=400",
+    image: "/images/lava10.jpg",
   })
-  const [previewImage, setPreviewImage] = useState(null)
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
   const router = useRouter()
   const { toast } = useToast()
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setNewProduct({
       ...newProduct,
@@ -62,22 +62,68 @@ export default function AdminPage() {
     })
   }
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0]
+  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
     if (file) {
+      // Validar el tipo de archivo
+      const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg']
+      if (!validTypes.includes(file.type)) {
+        toast({
+          title: "Error",
+          description: "Por favor selecciona una imagen en formato JPG, PNG o WebP",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Validar el tamaño (máximo 5MB)
+      const maxSize = 5 * 1024 * 1024 // 5MB
+      if (file.size > maxSize) {
+        toast({
+          title: "Error",
+          description: "La imagen debe ser menor a 5MB",
+          variant: "destructive",
+        })
+        return
+      }
+
       const reader = new FileReader()
-      reader.onloadend = () => {
-        setPreviewImage(reader.result)
-        setNewProduct({
-          ...newProduct,
-          image: reader.result,
+      reader.onload = () => {
+        try {
+          if (typeof reader.result === 'string') {
+            setPreviewImage(reader.result)
+            setNewProduct({
+              ...newProduct,
+              image: reader.result,
+            })
+            toast({
+              title: "Imagen cargada",
+              description: "La imagen se ha cargado correctamente",
+            })
+          }
+        } catch (error) {
+          toast({
+            title: "Error",
+            description: "Hubo un error al procesar la imagen",
+            variant: "destructive",
+          })
+          console.error("Error al procesar la imagen:", error)
+        }
+      }
+
+      reader.onerror = () => {
+        toast({
+          title: "Error",
+          description: "No se pudo leer el archivo",
+          variant: "destructive",
         })
       }
+
       reader.readAsDataURL(file)
     }
   }
 
-  const handleAddProduct = (e) => {
+  const handleAddProduct = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
     // Validación básica
@@ -104,7 +150,7 @@ export default function AdminPage() {
       name: "",
       price: "",
       description: "",
-      image: "/placeholder.svg?height=400&width=400",
+      image: "/images/lava10.jpg",
     })
     setPreviewImage(null)
 
@@ -114,7 +160,7 @@ export default function AdminPage() {
     })
   }
 
-  const handleDeleteProduct = (id) => {
+  const handleDeleteProduct = (id: number) => {
     setProducts(products.filter((product) => product.id !== id))
     toast({
       title: "Producto eliminado",

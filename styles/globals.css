@@ -2,8 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Definición de fuentes */
+@font-face {
+  font-family: 'Roboto';
+  src: url('/public/fonts/hack-regular.woff2') format('woff2');
+  font-weight: 400;  /* peso normal en lugar de 300 */
+  font-style: normal;
+  font-display: swap; /* mejora el rendimiento de carga */
+}
+
+/* Configuración base del body */
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Roboto', Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Ajustes tipográficos generales */
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 400;
+  }
+  
+  p {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 400;
+    line-height: 1.5;
+  }
 }
 
 @layer utilities {
@@ -92,3 +119,11 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+<Image
+  src="/images/lava10.jpg"
+  alt="Descripción de la imagen"
+  width={/* ancho en píxeles */}
+  height={/* alto en píxeles */}
+  priority={true}
+/>

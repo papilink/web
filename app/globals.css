@@ -10,6 +10,18 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+
+  .transition-smooth {
+    @apply transition-all duration-300 ease-in-out;
+  }
+  
+  .hover-scale {
+    @apply hover:scale-105 transition-smooth;
+  }
+  
+  .active-scale {
+    @apply active:scale-95 transition-smooth;
+  }
 }
 
 @layer base {
@@ -47,6 +59,7 @@ body {
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --background-pattern: radial-gradient(circle at 1px 1px, hsl(0 0% 0% / 0.05) 1px, transparent 0);
   }
   .dark {
     --background: 0 0% 3.9%;
@@ -81,6 +94,7 @@ body {
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --background-pattern: radial-gradient(circle at 1px 1px, hsl(0 0% 100% / 0.05) 1px, transparent 0);
   }
 }
 
@@ -90,5 +104,103 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+    background-image: var(--background-pattern);
+    background-size: 24px 24px;
+    position: relative;
+    min-height: 100vh;
   }
+  
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url('/images/lulaweb-character.jpeg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.15;
+    z-index: -2;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      hsl(var(--background) / 0.97),
+      hsl(var(--background) / 0.93)
+    );
+    z-index: -1;
+  }
+
+  @media (min-width: 640px) {
+    body::before {
+      opacity: 0.2;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    body::before {
+      opacity: 0.25;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    body::before,
+    body::after {
+      transition: none;
+    }
+  }
+
+  .dark body::before {
+    opacity: 0.1;
+  }
+
+  .dark body::after {
+    background: linear-gradient(
+      to bottom,
+      hsl(var(--background) / 0.98),
+      hsl(var(--background) / 0.95)
+    );
+  }
+}
+
+@layer components {
+  .lulaweb-metal {
+    @apply font-bold relative inline-block tracking-wider;
+    background: linear-gradient(to bottom, #cfcfcf 0%, #8e8e8e 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 
+      0 0 2px rgba(255, 255, 255, 0.4),
+      2px 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  .lulaweb-metal::before {
+    content: '';
+    @apply absolute top-0 left-[-50%] w-[200%] h-full;
+    background: linear-gradient(
+      to right,
+      transparent 0%,
+      rgba(255, 255, 255, 0.5) 50%,
+      transparent 100%
+    );
+    transform: skewX(-45deg);
+    animation: shine 3s infinite;
+  }
+
+  .btn-animated {
+    @apply transform transition-all duration-200 ease-in-out active:scale-95;
+  }
+  
+  .card-hover {
+    @apply hover:shadow-lg transition-smooth;
+  }
+}
+
+@keyframes shine {
+  from { transform: translateX(-100%) skewX(-45deg); }
+  to { transform: translateX(100%) skewX(-45deg); }
 }

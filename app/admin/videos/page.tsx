@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, ChangeEvent } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { ArrowLeft, Plus, Trash2, Upload, Play, Link } from "lucide-react"
@@ -13,8 +13,30 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
+interface Product {
+  id: number;
+  name: string;
+}
+
+interface Video {
+  id: number;
+  title: string;
+  description: string;
+  thumbnail: string;
+  videoUrl: string;
+  productId: number | null;
+}
+
+interface NewVideo {
+  title: string;
+  description: string;
+  thumbnail: string;
+  videoUrl: string;
+  productId: string;
+}
+
 // Datos de ejemplo para los productos
-const products = [
+const products: Product[] = [
   { id: 1, name: "Lámpara Vintage" },
   { id: 2, name: "Silla de Diseñador" },
   { id: 3, name: "Mesa de Centro" },
@@ -24,12 +46,12 @@ const products = [
 ]
 
 // Datos de ejemplo para los videos
-const initialVideos = [
+const initialVideos: Video[] = [
   {
     id: 1,
     title: "Lámpara Vintage - Vista 360°",
     description: "Mira todos los detalles de nuestra lámpara vintage en este video de 360 grados.",
-    thumbnail: "/placeholder.svg?height=160&width=288",
+    thumbnail: "/images/lava10.jpg",
     videoUrl: "/videos/sample-product1.mp4",
     productId: 1,
   },
@@ -37,7 +59,7 @@ const initialVideos = [
     id: 2,
     title: "Silla de Diseñador - Demostración",
     description: "Observa la calidad y el diseño de nuestra silla de diseñador exclusiva.",
-    thumbnail: "/placeholder.svg?height=160&width=288",
+    thumbnail: "/images/lava10.jpg",
     videoUrl: "/videos/sample-product2.mp4",
     productId: 2,
   },
@@ -45,31 +67,31 @@ const initialVideos = [
     id: 3,
     title: "Mesa de Centro - Características",
     description: "Conoce todas las características de nuestra elegante mesa de centro.",
-    thumbnail: "/placeholder.svg?height=160&width=288",
+    thumbnail: "/images/lava10.jpg",
     videoUrl: "/videos/sample-product3.mp4",
     productId: 3,
   },
 ]
 
 export default function AdminVideosPage() {
-  const [videos, setVideos] = useState(initialVideos)
-  const [newVideo, setNewVideo] = useState({
+  const [videos, setVideos] = useState<Video[]>(initialVideos)
+  const [newVideo, setNewVideo] = useState<NewVideo>({
     title: "",
     description: "",
-    thumbnail: "/placeholder.svg?height=160&width=288",
+    thumbnail: "/images/lava10.jpg",
     videoUrl: "",
     productId: "",
   })
-  const [videoFile, setVideoFile] = useState(null)
-  const [thumbnailFile, setThumbnailFile] = useState(null)
-  const [previewThumbnail, setPreviewThumbnail] = useState(null)
-  const [previewVideo, setPreviewVideo] = useState(null)
-  const videoInputRef = useRef(null)
-  const thumbnailInputRef = useRef(null)
+  const [videoFile, setVideoFile] = useState<File | null>(null)
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
+  const [previewThumbnail, setPreviewThumbnail] = useState<string | null>(null)
+  const [previewVideo, setPreviewVideo] = useState<string | null>(null)
+  const videoInputRef = useRef<HTMLInputElement>(null)
+  const thumbnailInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const { toast } = useToast()
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setNewVideo({
       ...newVideo,
@@ -77,15 +99,15 @@ export default function AdminVideosPage() {
     })
   }
 
-  const handleProductSelect = (value) => {
+  const handleProductSelect = (value: string) => {
     setNewVideo({
       ...newVideo,
       productId: value,
     })
   }
 
-  const handleVideoUpload = (e) => {
-    const file = e.target.files[0]
+  const handleVideoUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
     if (file) {
       setVideoFile(file)
 
@@ -100,71 +122,93 @@ export default function AdminVideosPage() {
     }
   }
 
-  const handleThumbnailUpload = (e) => {
-    const file = e.target.files[0]
+  const handleThumbnailUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
     if (file) {
       setThumbnailFile(file)
 
       // Create a preview URL for the thumbnail
       const reader = new FileReader()
       reader.onloadend = () => {
-        setPreviewThumbnail(reader.result)
+        if (typeof reader.result === 'string') {
+          setPreviewThumbnail(reader.result)
 
-        setNewVideo({
-          ...newVideo,
-          thumbnail: reader.result, // In a real app, this would be the uploaded file URL
-        })
+          setNewVideo({
+            ...newVideo,
+            thumbnail: reader.result, // In a real app, this would be the uploaded file URL
+          })
+        }
       }
       reader.readAsDataURL(file)
     }
   }
 
-  const handleAddVideo = (e) => {
+  const handleAddVideo = (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Validación básica
-    if (!newVideo.title || !newVideo.videoUrl) {
+    // Validación completa
+    if (!newVideo.title) {
       toast({
         title: "Error",
-        description: "Por favor completa al menos el título y sube un video",
+        description: "Por favor ingresa el título del video",
         variant: "destructive",
       })
       return
     }
 
-    // Agregar nuevo video
-    const newVideoWithId = {
-      ...newVideo,
-      id: Date.now(), // Generar un ID único basado en timestamp
-      productId: newVideo.productId ? Number.parseInt(newVideo.productId) : null,
+    if (!videoFile) {
+      toast({
+        title: "Error",
+        description: "Por favor sube un video",
+        variant: "destructive",
+      })
+      return
     }
 
-    setVideos([...videos, newVideoWithId])
+    // Preparar el nuevo video con valores correctos
+    const newVideoWithId: Video = {
+      ...newVideo,
+      id: Date.now(),
+      // Si productId es "none" o está vacío, será null, de lo contrario convertir a número
+      productId: newVideo.productId && newVideo.productId !== "none" 
+        ? Number(newVideo.productId) 
+        : null,
+      // Asegurar que tenemos una miniatura
+      thumbnail: previewThumbnail || newVideo.thumbnail,
+      // En un caso real, aquí se subiría el video a un servidor y se obtendría la URL
+      videoUrl: videoFile.name
+    }
+
+    // Actualizar el estado de videos
+    setVideos(prevVideos => [...prevVideos, newVideoWithId])
+
+    // Mostrar mensaje de éxito
+    toast({
+      title: "Video agregado",
+      description: "El video ha sido agregado exitosamente",
+    })
 
     // Resetear el formulario
     setNewVideo({
       title: "",
       description: "",
-      thumbnail: "/placeholder.svg?height=160&width=288",
+      thumbnail: "/images/lava10.jpg",
       videoUrl: "",
       productId: "",
     })
+    
+    // Limpiar archivos y previsualizaciones
     setVideoFile(null)
     setThumbnailFile(null)
     setPreviewThumbnail(null)
     setPreviewVideo(null)
 
-    // Reset file inputs
+    // Limpiar los inputs de archivo
     if (videoInputRef.current) videoInputRef.current.value = ""
     if (thumbnailInputRef.current) thumbnailInputRef.current.value = ""
-
-    toast({
-      title: "Video agregado",
-      description: "El video ha sido agregado exitosamente",
-    })
   }
 
-  const handleDeleteVideo = (id) => {
+  const handleDeleteVideo = (id: number) => {
     setVideos(videos.filter((video) => video.id !== id))
     toast({
       title: "Video eliminado",
@@ -172,7 +216,7 @@ export default function AdminVideosPage() {
     })
   }
 
-  const handlePreviewVideo = (video) => {
+  const handlePreviewVideo = (video: Video) => {
     // Open video in a new tab
     window.open(video.videoUrl, "_blank")
   }
@@ -324,7 +368,7 @@ export default function AdminVideosPage() {
                       <div key={video.id} className="flex gap-4 p-4 rounded-lg border">
                         <div className="relative h-20 w-36 flex-shrink-0 rounded-md overflow-hidden bg-muted">
                           <Image
-                            src={video.thumbnail || "/placeholder.svg?height=80&width=144"}
+                            src={video.thumbnail || "/images/lava10.jpg"}
                             alt={video.title}
                             fill
                             className="object-cover"

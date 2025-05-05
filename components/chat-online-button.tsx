@@ -10,18 +10,57 @@ import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
 
+interface Message {
+  id: string
+  sender: "user" | "agent"
+  name: string
+  message: string
+  timestamp: string
+}
+
 export default function ChatOnlineButton() {
   const [isOpen, setIsOpen] = useState(false)
-  const [messages, setMessages] = useState([])
+  const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState("")
   const [isSoundEnabled, setIsSoundEnabled] = useState(true)
   const [isTyping, setIsTyping] = useState(false)
   const [hasNewMessage, setHasNewMessage] = useState(false)
   const [isOnline, setIsOnline] = useState(true)
-  const messagesEndRef = useRef(null)
-  const audioRef = useRef(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
   const { toast } = useToast()
+  const [mounted, setMounted] = useState(false)
+
+  // Función para reproducir el sonido usando Web Audio API
+  const playNotificationSound = () => {
+    if (!isSoundEnabled || typeof window === "undefined") return
+
+    try {
+      const AudioContext = window.AudioContext
+      const audioContext = new AudioContext()
+      const oscillator = audioContext.createOscillator()
+      const gainNode = audioContext.createGain()
+
+      oscillator.connect(gainNode)
+      gainNode.connect(audioContext.destination)
+
+      oscillator.type = "sine"
+      oscillator.frequency.value = 800
+
+      gainNode.gain.setValueAtTime(0.1, audioContext.currentTime)
+      gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1)
+
+      oscillator.start(audioContext.currentTime)
+      oscillator.stop(audioContext.currentTime + 0.1)
+    } catch (error) {
+      console.error("Error playing notification sound:", error)
+    }
+  }
+
+  // Solo renderizar el componente en el cliente
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Reset chat state when navigating to a different page
   useEffect(() => {
@@ -39,19 +78,16 @@ export default function ChatOnlineButton() {
 
   // Play sound when chat is opened for the first time
   useEffect(() => {
+    if (!mounted) return
+
     if (isOpen && messages.length === 0 && isSoundEnabled) {
-      if (audioRef.current) {
-        audioRef.current.currentTime = 0
-        audioRef.current.play().catch((error) => {
-          console.error("Error playing sound:", error)
-        })
-      }
+      playNotificationSound()
 
       // Add initial welcome message after a short delay
       const timer = setTimeout(() => {
         setMessages([
           {
-            id: 1,
+            id: "welcome",
             sender: "agent",
             name: "Soporte",
             message: "¡Hola! ¿En qué puedo ayudarte hoy?",
@@ -62,16 +98,18 @@ export default function ChatOnlineButton() {
 
       return () => clearTimeout(timer)
     }
-  }, [isOpen, messages.length, isSoundEnabled])
+  }, [isOpen, messages.length, isSoundEnabled, mounted])
 
   // Show notification when new message arrives and chat is closed
   useEffect(() => {
+    if (!mounted) return
+
     if (messages.length > 0 && !isOpen && messages[messages.length - 1].sender === "agent") {
       setHasNewMessage(true)
     } else {
       setHasNewMessage(false)
     }
-  }, [messages, isOpen])
+  }, [messages, isOpen, mounted])
 
   // Simulate agent typing
   const simulateAgentTyping = () => {
@@ -98,7 +136,7 @@ export default function ChatOnlineButton() {
       setMessages((prev) => [
         ...prev,
         {
-          id: Date.now(),
+          id: `agent-${Date.now()}`,
           sender: "agent",
           name: "Soporte",
           message: randomResponse,
@@ -107,24 +145,20 @@ export default function ChatOnlineButton() {
       ])
 
       // Play notification sound if enabled
-      if (isSoundEnabled && audioRef.current) {
-        audioRef.current.currentTime = 0
-        audioRef.current.volume = 0.5
-        audioRef.current.play().catch((error) => {
-          console.error("Error playing sound:", error)
-        })
+      if (isSoundEnabled) {
+        playNotificationSound()
       }
     }, typingTime)
   }
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
     if (!newMessage.trim()) return
 
     // Add user message
-    const userMessage = {
-      id: Date.now(),
+    const userMessage: Message = {
+      id: `user-${messages.length}`,
       sender: "user",
       name: "Tú",
       message: newMessage.trim(),
@@ -133,9 +167,7 @@ export default function ChatOnlineButton() {
 
     setMessages((prev) => [...prev, userMessage])
     setNewMessage("")
-
-    // Simulate agent typing after a short delay
-    setTimeout(simulateAgentTyping, 500)
+    simulateAgentTyping()
   }
 
   const toggleSound = () => {
@@ -149,11 +181,13 @@ export default function ChatOnlineButton() {
     })
   }
 
+  // Solo renderizar si estamos en el cliente
+  if (!mounted) {
+    return null
+  }
+
   return (
     <>
-      {/* Audio element for notification sound */}
-      <audio ref={audioRef} src="/sounds/chat-call.mp3" />
-
       {/* Chat button */}
       <div className="fixed bottom-6 right-6 z-50">
         <AnimatePresence>
@@ -203,7 +237,7 @@ export default function ChatOnlineButton() {
                   <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 ring-1 ring-white" />
                 </div>
                 <div>
-                  <h3 className="font-medium text-sm">Soporte Lulaweb</h3>
+                  <h3 className="font-medium text-sm metal-text">Soporte <span className="lulaweb-metal">Lulaweb</span></h3>
                   <p className="text-xs opacity-90">En línea</p>
                 </div>
               </div>

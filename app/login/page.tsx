@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { LockKeyhole } from "lucide-react"
 
@@ -10,6 +10,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 
+// Credenciales de administrador (en un sistema real, esto estaría en el servidor)
+const ADMIN_CREDENTIALS = {
+  username: "vaco",
+  password: "2025"
+}
+
 export default function LoginPage() {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
@@ -17,22 +23,30 @@ export default function LoginPage() {
   const router = useRouter()
   const { toast } = useToast()
 
-  const handleSubmit = async (e) => {
+  useEffect(() => {
+    // Mostrar el mensaje de atajo al cargar la página
+    toast({
+      title: "💡 Tip",
+      description: "Puedes usar Ctrl + Space desde cualquier página para acceder rápidamente",
+      duration: 5000,
+    })
+  }, [toast])
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
     // Simulación de autenticación (en un sistema real, esto se haría con una API)
     setTimeout(() => {
-      // Credenciales de ejemplo (en un sistema real, esto se verificaría en el servidor)
-      if (username === "admin" && password === "admin123") {
+      if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
         toast({
-          title: "Inicio de sesión exitoso",
+          title: "✅ Inicio de sesión exitoso",
           description: "Bienvenido al panel de administración",
         })
         router.push("/admin")
       } else {
         toast({
-          title: "Error de autenticación",
+          title: "❌ Error de autenticación",
           description: "Usuario o contraseña incorrectos",
           variant: "destructive",
         })
@@ -51,7 +65,9 @@ export default function LoginPage() {
             </div>
           </div>
           <CardTitle className="text-2xl font-bold">Acceso Administrativo</CardTitle>
-          <CardDescription>Ingresa tus credenciales para acceder al panel de administración</CardDescription>
+          <CardDescription>
+            Ingresa tus credenciales para acceder al panel de administración
+          </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
@@ -64,6 +80,7 @@ export default function LoginPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
+                autoComplete="username"
               />
             </div>
             <div className="space-y-2">
@@ -75,6 +92,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                autoComplete="current-password"
               />
             </div>
           </CardContent>

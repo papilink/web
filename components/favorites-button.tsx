@@ -5,7 +5,23 @@ import { Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import FavoritesDrawer from "@/components/favorites-drawer"
 
-export default function FavoritesButton({ favorites = [], products = [], onRemoveFavorite }) {
+interface Product {
+  id: number
+  name: string
+  price: number
+  description: string
+  image: string
+  category?: string
+  stock?: number
+}
+
+interface FavoritesButtonProps {
+  favorites: number[]
+  products: Product[]
+  onRemoveFavorite: (id: number) => void
+}
+
+export default function FavoritesButton({ favorites = [], products = [], onRemoveFavorite }: FavoritesButtonProps) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
 
   const toggleDrawer = () => {
@@ -14,10 +30,16 @@ export default function FavoritesButton({ favorites = [], products = [], onRemov
 
   return (
     <>
-      <Button variant="outline" size="icon" className="relative" onClick={toggleDrawer} aria-label="Ver favoritos">
-        <Heart className="h-[1.2rem] w-[1.2rem]" />
+      <Button 
+        variant="outline" 
+        size="icon" 
+        className="relative btn-animated hover-scale" 
+        onClick={toggleDrawer} 
+        aria-label="Ver favoritos"
+      >
+        <Heart className="h-[1.2rem] w-[1.2rem] transition-colors duration-200" />
         {favorites.length > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
+          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white animate-in zoom-in-50 duration-200">
             {favorites.length}
           </span>
         )}
@@ -25,7 +47,10 @@ export default function FavoritesButton({ favorites = [], products = [], onRemov
 
       {isDrawerOpen && (
         <>
-          <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40" onClick={() => setIsDrawerOpen(false)} />
+          <div 
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 animate-in fade-in duration-200" 
+            onClick={() => setIsDrawerOpen(false)} 
+          />
           <FavoritesDrawer
             favorites={favorites}
             products={products}
