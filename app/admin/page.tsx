@@ -3,8 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { Plus, Trash2, Upload, Database, Video } from "lucide-react"
-import { ChangeEvent, FormEvent } from "react"
+import { Plus, Trash2, Upload, Database, Video, Edit2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -14,103 +13,68 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import AdminChatInterface from "@/components/admin-chat-interface"
+import { useProducts } from "@/components/products-provider"
 
-// Datos de ejemplo para los productos
-const initialProducts = [
-  {
-    id: 1,
-    name: "Lámpara Vintage",
-    price: 45.99,
-    description:
-      "Lámpara de mesa vintage en excelente estado. Perfecta para dar un toque elegante a cualquier habitación.",
-    image: "/images/lava10.jpg",
-  },
-  {
-    id: 2,
-    name: "Silla de Diseñador",
-    price: 120.0,
-    description: "Silla de diseñador en madera y cuero. Muy cómoda y en perfecto estado.",
-    image: "/images/lava10.jpg",
-  },
-  {
-    id: 3,
-    name: "Mesa de Centro",
-    price: 85.5,
-    description: "Mesa de centro de cristal con base de madera. Elegante y funcional.",
-    image: "/images/lava10.jpg",
-  },
-]
+interface Product {
+  id: string
+  nombre: string
+  descripcion: string
+  precio: number
+  stock: number
+  categoria: string
+  imagen: string
+}
 
 export default function AdminPage() {
-  const [products, setProducts] = useState(initialProducts)
+  const router = useRouter()
+  const { toast } = useToast()
+  const { products, loading, error, refreshProducts } = useProducts()
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [newProduct, setNewProduct] = useState({
     name: "",
     price: "",
     description: "",
-    image: "/images/lava10.jpg",
+    category: "",
+    stock: "",
+    image: "/placeholder.svg"
   })
   const [previewImage, setPreviewImage] = useState<string | null>(null)
-  const router = useRouter()
-  const { toast } = useToast()
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setNewProduct({
-      ...newProduct,
-      [name]: name === "price" ? Number.parseFloat(value) || "" : value,
-    })
-  }
-
-  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      // Validar el tipo de archivo
-      const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg']
-      if (!validTypes.includes(file.type)) {
-        toast({
-          title: "Error",
-          description: "Por favor selecciona una imagen en formato JPG, PNG o WebP",
-          variant: "destructive",
-        })
-        return
-      }
-
-      // Validar el tamaño (máximo 5MB)
-      const maxSize = 5 * 1024 * 1024 // 5MB
-      if (file.size > maxSize) {
-        toast({
-          title: "Error",
-          description: "La imagen debe ser menor a 5MB",
-          variant: "destructive",
-        })
-        return
-      }
-
       const reader = new FileReader()
       reader.onload = () => {
-        try {
-          if (typeof reader.result === 'string') {
-            setPreviewImage(reader.result)
-            setNewProduct({
-              ...newProduct,
-              image: reader.result,
-            })
-            toast({
-              title: "Imagen cargada",
-              description: "La imagen se ha cargado correctamente",
-            })
+        if (typeof reader.result === "string") {
+          setPreviewImage(reader.result)
+          if (editingProduct) {
+            setEditingProduct({ ...editingProduct, imagen: reader.result })
+          } else {
+            setNewProduct({ ...newProduct, image: reader.result })
           }
-        } catch (error) {
-          toast({
-            title: "Error",
-            description: "Hubo un error al procesar la imagen",
-            variant: "destructive",
-          })
-          console.error("Error al procesar la imagen:", error)
         }
       }
-
       reader.onerror = () => {
         toast({
           title: "Error",
@@ -118,16 +82,14 @@ export default function AdminPage() {
           variant: "destructive",
         })
       }
-
       reader.readAsDataURL(file)
     }
   }
 
-  const handleAddProduct = (e: FormEvent<HTMLFormElement>) => {
+  const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Validación básica
-    if (!newProduct.name || !newProduct.price || !newProduct.description) {
+    if (!newProduct.name || !newProduct.price || !newProduct.category) {
       toast({
         title: "Error",
         description: "Por favor completa todos los campos requeridos",
@@ -136,44 +98,133 @@ export default function AdminPage() {
       return
     }
 
-    // Agregar nuevo producto
-    const newProductWithId = {
-      ...newProduct,
-      id: Date.now(), // Generar un ID único basado en timestamp
-      price: Number.parseFloat(newProduct.price),
+    try {
+      const precioNum = parseFloat(newProduct.price)
+      const stockNum = parseInt(newProduct.stock) || 0
+
+      if (isNaN(precioNum) || precioNum < 0) {
+        toast({
+          title: "Error",
+          description: "El precio debe ser un número válido y positivo",
+          variant: "destructive",
+        })
+        return
+      }
+
+      const response = await fetch('/api/productos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nombre: newProduct.name,
+          descripcion: newProduct.description,
+          precio: precioNum,
+          categoria: newProduct.category,
+          stock: stockNum,
+          imagen: newProduct.image
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Error al crear el producto')
+      }
+
+      await refreshProducts()
+
+      setNewProduct({
+        name: "",
+        price: "",
+        description: "",
+        category: "",
+        stock: "",
+        image: "/placeholder.svg",
+      })
+      setPreviewImage(null)
+
+      toast({
+        title: "Éxito",
+        description: "El producto ha sido agregado exitosamente",
+      })
+    } catch (error) {
+      console.error('Error:', error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al crear el producto",
+        variant: "destructive",
+      })
     }
-
-    setProducts([...products, newProductWithId])
-
-    // Resetear el formulario
-    setNewProduct({
-      name: "",
-      price: "",
-      description: "",
-      image: "/images/lava10.jpg",
-    })
-    setPreviewImage(null)
-
-    toast({
-      title: "Producto agregado",
-      description: "El producto ha sido agregado exitosamente",
-    })
   }
 
-  const handleDeleteProduct = (id: number) => {
-    setProducts(products.filter((product) => product.id !== id))
-    toast({
-      title: "Producto eliminado",
-      description: "El producto ha sido eliminado exitosamente",
-    })
+  const handleEditProduct = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingProduct) return
+
+    try {
+      const response = await fetch(`/api/productos?id=${editingProduct.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nombre: editingProduct.nombre,
+          descripcion: editingProduct.descripcion,
+          precio: editingProduct.precio,
+          categoria: editingProduct.categoria,
+          stock: editingProduct.stock,
+          imagen: editingProduct.imagen
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Error al actualizar el producto')
+      }
+
+      await refreshProducts()
+      setEditingProduct(null)
+
+      toast({
+        title: "Éxito",
+        description: "El producto ha sido actualizado exitosamente",
+      })
+    } catch (error) {
+      console.error('Error:', error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al actualizar el producto",
+        variant: "destructive",
+      })
+    }
   }
 
-  const handleLogout = () => {
-    toast({
-      title: "Sesión cerrada",
-      description: "Has cerrado sesión exitosamente",
-    })
-    router.push("/")
+  const handleDeleteProduct = async (id: string) => {
+    if (!id) return
+
+    try {
+      const response = await fetch(`/api/productos?id=${id}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error('Error al eliminar el producto')
+      }
+
+      await refreshProducts()
+
+      toast({
+        title: "Producto eliminado",
+        description: "El producto ha sido eliminado exitosamente",
+      })
+    } catch (error) {
+      console.error('Error:', error)
+      toast({
+        title: "Error",
+        description: "Hubo un error al eliminar el producto",
+        variant: "destructive",
+      })
+    }
   }
 
   return (
@@ -182,35 +233,31 @@ export default function AdminPage() {
         <header className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Panel de Administración</h1>
-            <p className="text-gray-600">Gestiona los productos de tu venta de garage</p>
+            <p className="text-gray-600">Gestiona los productos de tu tienda</p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" className="flex items-center gap-2" onClick={() => router.push("/admin/videos")}>
-              <Video className="h-4 w-4" />
-              <span className="hidden sm:inline">Videos</span>
+          <div className="flex gap-4">
+            <Button variant="outline" onClick={() => router.push("/admin/database")}>
+              <Database className="h-4 w-4 mr-2" />
+              Base de Datos
             </Button>
-            <Button
-              variant="outline"
-              className="flex items-center gap-2"
-              onClick={() => router.push("/admin/database")}
-            >
-              <Database className="h-4 w-4" />
-              <span className="hidden sm:inline">Base de Datos</span>
-            </Button>
-            <Button variant="outline" onClick={handleLogout}>
-              Cerrar sesión
+            <Button variant="outline" onClick={() => router.push("/admin/videos")}>
+              <Video className="h-4 w-4 mr-2" />
+              Videos
             </Button>
           </div>
         </header>
 
-        <Tabs defaultValue="products" className="w-full">
-          <TabsList className="mb-8">
-            <TabsTrigger value="products">Productos</TabsTrigger>
+        <Tabs defaultValue="products">
+          <TabsList className="mb-4">
+            <TabsTrigger value="products">
+              Productos
+              <Badge variant="secondary" className="ml-2">
+                {products?.length || 0}
+              </Badge>
+            </TabsTrigger>
             <TabsTrigger value="messages">
               Mensajes
-              <Badge variant="secondary" className="ml-2">
-                3
-              </Badge>
+              <Badge variant="secondary" className="ml-2">0</Badge>
             </TabsTrigger>
           </TabsList>
 
@@ -230,42 +277,64 @@ export default function AdminPage() {
                         id="name"
                         name="name"
                         value={newProduct.name}
-                        onChange={handleInputChange}
-                        placeholder="Ej: Lámpara Vintage"
+                        onChange={(e) =>
+                          setNewProduct({ ...newProduct, name: e.target.value })
+                        }
                         required
                       />
                     </div>
-
                     <div className="space-y-2">
-                      <Label htmlFor="price">Precio ($)</Label>
+                      <Label htmlFor="price">Precio</Label>
                       <Input
                         id="price"
                         name="price"
                         type="number"
                         step="0.01"
-                        min="0"
                         value={newProduct.price}
-                        onChange={handleInputChange}
-                        placeholder="Ej: 45.99"
+                        onChange={(e) =>
+                          setNewProduct({ ...newProduct, price: e.target.value })
+                        }
                         required
                       />
                     </div>
-
+                    <div className="space-y-2">
+                      <Label htmlFor="stock">Stock</Label>
+                      <Input
+                        id="stock"
+                        name="stock"
+                        type="number"
+                        value={newProduct.stock}
+                        onChange={(e) =>
+                          setNewProduct({ ...newProduct, stock: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="category">Categoría</Label>
+                      <Input
+                        id="category"
+                        name="category"
+                        value={newProduct.category}
+                        onChange={(e) =>
+                          setNewProduct({ ...newProduct, category: e.target.value })
+                        }
+                        required
+                      />
+                    </div>
                     <div className="space-y-2">
                       <Label htmlFor="description">Descripción</Label>
                       <Textarea
                         id="description"
                         name="description"
                         value={newProduct.description}
-                        onChange={handleInputChange}
-                        placeholder="Describe el producto..."
-                        rows={4}
+                        onChange={(e) =>
+                          setNewProduct({ ...newProduct, description: e.target.value })
+                        }
                         required
                       />
                     </div>
-
                     <div className="space-y-2">
-                      <Label htmlFor="image">Imagen</Label>
+                      <Label>Imagen</Label>
                       <div className="flex items-center gap-4">
                         <div className="relative h-20 w-20 overflow-hidden rounded-md border">
                           <Image
@@ -304,36 +373,207 @@ export default function AdminPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Productos Actuales</CardTitle>
-                    <CardDescription>Administra los productos de tu venta de garage</CardDescription>
+                    <CardDescription>Administra los productos de tu tienda</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {products.length === 0 ? (
+                      {loading ? (
+                        <div className="animate-pulse space-y-4">
+                          {[...Array(3)].map((_, i) => (
+                            <div key={i} className="flex items-center gap-4 p-4 rounded-lg border">
+                              <div className="h-16 w-16 bg-gray-200 rounded-md"></div>
+                              <div className="flex-1 space-y-2">
+                                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : error ? (
+                        <div className="text-center text-red-500 py-8">
+                          Error al cargar los productos: {error}
+                        </div>
+                      ) : products.length === 0 ? (
                         <p className="text-center text-gray-500 py-8">No hay productos disponibles</p>
                       ) : (
                         products.map((product) => (
                           <div key={product.id} className="flex items-center gap-4 p-4 rounded-lg border">
                             <div className="relative h-16 w-16 overflow-hidden rounded-md flex-shrink-0">
                               <Image
-                                src={product.image || "/placeholder.svg"}
-                                alt={product.name}
+                                src={product.imagen || "/placeholder.svg"}
+                                alt={product.nombre}
                                 fill
                                 className="object-cover"
                               />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h3 className="font-medium text-gray-900 truncate">{product.name}</h3>
-                              <p className="text-sm text-gray-500 truncate">${product.price.toFixed(2)}</p>
+                              <h3 className="font-medium text-gray-900">{product.nombre}</h3>
+                              <p className="text-sm text-gray-500 truncate">{product.descripcion}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-sm font-medium text-gray-900">
+                                  ${product.precio.toFixed(2)}
+                                </span>
+                                <span className="text-sm text-gray-500">
+                                  Stock: {product.stock}
+                                </span>
+                                <Badge variant="secondary">{product.categoria}</Badge>
+                              </div>
                             </div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                              onClick={() => handleDeleteProduct(product.id)}
-                            >
-                              <Trash2 className="h-5 w-5" />
-                              <span className="sr-only">Eliminar</span>
-                            </Button>
+                            <div className="flex items-center gap-2">
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                                    onClick={() => setEditingProduct(product)}
+                                  >
+                                    <Edit2 className="h-5 w-5" />
+                                    <span className="sr-only">Editar</span>
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>Editar Producto</DialogTitle>
+                                    <DialogDescription>
+                                      Modifica los detalles del producto y guarda los cambios.
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  {editingProduct && (
+                                    <form onSubmit={handleEditProduct} className="space-y-4">
+                                      <div className="space-y-2">
+                                        <Label htmlFor="edit-name">Nombre</Label>
+                                        <Input
+                                          id="edit-name"
+                                          value={editingProduct.nombre}
+                                          onChange={(e) =>
+                                            setEditingProduct({
+                                              ...editingProduct,
+                                              nombre: e.target.value,
+                                            })
+                                          }
+                                          required
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor="edit-price">Precio</Label>
+                                        <Input
+                                          id="edit-price"
+                                          type="number"
+                                          step="0.01"
+                                          value={editingProduct.precio}
+                                          onChange={(e) =>
+                                            setEditingProduct({
+                                              ...editingProduct,
+                                              precio: parseFloat(e.target.value),
+                                            })
+                                          }
+                                          required
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor="edit-stock">Stock</Label>
+                                        <Input
+                                          id="edit-stock"
+                                          type="number"
+                                          value={editingProduct.stock}
+                                          onChange={(e) =>
+                                            setEditingProduct({
+                                              ...editingProduct,
+                                              stock: parseInt(e.target.value),
+                                            })
+                                          }
+                                          required
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor="edit-category">Categoría</Label>
+                                        <Input
+                                          id="edit-category"
+                                          value={editingProduct.categoria}
+                                          onChange={(e) =>
+                                            setEditingProduct({
+                                              ...editingProduct,
+                                              categoria: e.target.value,
+                                            })
+                                          }
+                                          required
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor="edit-description">Descripción</Label>
+                                        <Textarea
+                                          id="edit-description"
+                                          value={editingProduct.descripcion}
+                                          onChange={(e) =>
+                                            setEditingProduct({
+                                              ...editingProduct,
+                                              descripcion: e.target.value,
+                                            })
+                                          }
+                                          required
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label>Imagen</Label>
+                                        <div className="flex items-center gap-4">
+                                          <div className="relative h-20 w-20 overflow-hidden rounded-md border">
+                                            <Image
+                                              src={editingProduct.imagen || "/placeholder.svg"}
+                                              alt="Vista previa"
+                                              fill
+                                              className="object-cover"
+                                            />
+                                          </div>
+                                          <label htmlFor="edit-image-upload" className="cursor-pointer">
+                                            <div className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
+                                              <Upload className="h-4 w-4" />
+                                              <span>Cambiar imagen</span>
+                                            </div>
+                                            <input
+                                              id="edit-image-upload"
+                                              type="file"
+                                              accept="image/*"
+                                              onChange={handleImageChange}
+                                              className="sr-only"
+                                            />
+                                          </label>
+                                        </div>
+                                      </div>
+                                      <DialogFooter>
+                                        <Button type="submit">Guardar cambios</Button>
+                                      </DialogFooter>
+                                    </form>
+                                  )}
+                                </DialogContent>
+                              </Dialog>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                  >
+                                    <Trash2 className="h-5 w-5" />
+                                    <span className="sr-only">Eliminar</span>
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>¿Está seguro que desea eliminar este producto?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Esta acción no se puede deshacer y eliminará permanentemente el producto de la base de datos.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDeleteProduct(product.id)}>
+                                      Eliminar
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
                           </div>
                         ))
                       )}
@@ -345,15 +585,7 @@ export default function AdminPage() {
           </TabsContent>
 
           <TabsContent value="messages">
-            <Card>
-              <CardHeader>
-                <CardTitle>Mensajes de Clientes</CardTitle>
-                <CardDescription>Responde a las preguntas de los clientes sobre tus productos</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <AdminChatInterface />
-              </CardContent>
-            </Card>
+            <AdminChatInterface />
           </TabsContent>
         </Tabs>
       </div>

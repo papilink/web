@@ -4,11 +4,11 @@ import { createContext, useState, useContext, useEffect } from "react"
 
 // Crear el contexto
 export const FavoritesContext = createContext({
-  favorites: [],
-  addFavorite: (productId) => {},
-  removeFavorite: (productId) => {},
-  toggleFavorite: (productId) => {},
-  isFavorite: (productId) => false,
+  favorites: [] as string[],
+  addFavorite: (productId: string) => {},
+  removeFavorite: (productId: string) => {},
+  toggleFavorite: (productId: string) => {},
+  isFavorite: (productId: string) => false,
 })
 
 // Hook personalizado para usar el contexto
@@ -16,7 +16,7 @@ export const useFavorites = () => useContext(FavoritesContext)
 
 // Proveedor del contexto
 export default function FavoritesProvider({ children }) {
-  const [favorites, setFavorites] = useState([])
+  const [favorites, setFavorites] = useState<string[]>([])
 
   // Cargar favoritos del localStorage al iniciar
   useEffect(() => {
@@ -36,19 +36,19 @@ export default function FavoritesProvider({ children }) {
   }, [favorites])
 
   // Añadir un producto a favoritos
-  const addFavorite = (productId) => {
+  const addFavorite = (productId: string) => {
     if (!favorites.includes(productId)) {
       setFavorites([...favorites, productId])
     }
   }
 
   // Eliminar un producto de favoritos
-  const removeFavorite = (productId) => {
+  const removeFavorite = (productId: string) => {
     setFavorites(favorites.filter((id) => id !== productId))
   }
 
   // Alternar estado de favorito
-  const toggleFavorite = (productId) => {
+  const toggleFavorite = (productId: string) => {
     if (favorites.includes(productId)) {
       removeFavorite(productId)
     } else {
@@ -57,7 +57,7 @@ export default function FavoritesProvider({ children }) {
   }
 
   // Verificar si un producto está en favoritos
-  const isFavorite = (productId) => {
+  const isFavorite = (productId: string) => {
     return favorites.includes(productId)
   }
 

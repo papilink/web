@@ -2,62 +2,38 @@
 
 import { useState } from "react"
 import { Heart } from "lucide-react"
+
 import { Button } from "@/components/ui/button"
+import { useFavorites } from "@/components/favorites-provider"
 import FavoritesDrawer from "@/components/favorites-drawer"
 
-interface Product {
-  id: number
-  name: string
-  price: number
-  description: string
-  image: string
-  category?: string
-  stock?: number
-}
-
-interface FavoritesButtonProps {
-  favorites: number[]
-  products: Product[]
-  onRemoveFavorite: (id: number) => void
-}
-
-export default function FavoritesButton({ favorites = [], products = [], onRemoveFavorite }: FavoritesButtonProps) {
+export default function FavoritesButton() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
-
-  const toggleDrawer = () => {
-    setIsDrawerOpen(!isDrawerOpen)
-  }
+  const { favorites, removeFavorite } = useFavorites()
 
   return (
     <>
-      <Button 
-        variant="outline" 
-        size="icon" 
-        className="relative btn-animated hover-scale" 
-        onClick={toggleDrawer} 
-        aria-label="Ver favoritos"
+      <Button
+        variant="ghost"
+        size="icon"
+        className="relative"
+        onClick={() => setIsDrawerOpen(true)}
       >
-        <Heart className="h-[1.2rem] w-[1.2rem] transition-colors duration-200" />
+        <Heart className="h-5 w-5" />
         {favorites.length > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white animate-in zoom-in-50 duration-200">
+          <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground flex items-center justify-center">
             {favorites.length}
           </span>
         )}
+        <span className="sr-only">Ver favoritos</span>
       </Button>
 
       {isDrawerOpen && (
-        <>
-          <div 
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 animate-in fade-in duration-200" 
-            onClick={() => setIsDrawerOpen(false)} 
-          />
-          <FavoritesDrawer
-            favorites={favorites}
-            products={products}
-            onClose={() => setIsDrawerOpen(false)}
-            onRemoveFavorite={onRemoveFavorite}
-          />
-        </>
+        <FavoritesDrawer
+          favorites={favorites}
+          onClose={() => setIsDrawerOpen(false)}
+          onRemoveFavorite={removeFavorite}
+        />
       )}
     </>
   )

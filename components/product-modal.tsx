@@ -10,12 +10,28 @@ import ChatInterface from "@/components/chat-interface"
 import HeartIconButton from "@/components/heart-icon-button"
 import { useCart } from "@/components/cart-provider"
 
-export default function ProductModal({ product, isOpen, onClose }) {
+interface Product {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  precio: number;
+  stock: number;
+  categoria: string;
+  imagen: string;
+}
+
+interface ProductModalProps {
+  product: Product;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function ProductModal({ product, isOpen, onClose }: ProductModalProps) {
   const { addToCart } = useCart()
 
   // Cerrar el modal con la tecla Escape
   useEffect(() => {
-    const handleEscape = (e) => {
+    const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose()
     }
 
@@ -48,7 +64,7 @@ export default function ProductModal({ product, isOpen, onClose }) {
         <CardContent className="p-0">
           <div className="grid md:grid-cols-2 gap-0">
             <div className="relative h-[300px] md:h-[500px] bg-gray-100">
-              <Image src={product.image || "/placeholder.svg"} alt={product.name} fill className="object-cover" />
+              <Image src={product.imagen || "/placeholder.svg"} alt={product.nombre} fill className="object-cover" />
 
               {/* Botón de corazón en la esquina superior derecha */}
               <div className="absolute top-4 left-4">
@@ -56,31 +72,42 @@ export default function ProductModal({ product, isOpen, onClose }) {
               </div>
             </div>
 
-            <div className="p-6 md:p-8 flex flex-col">
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{product.name}</h2>
-              <p className="text-2xl font-semibold text-gray-900 mb-6">${product.price.toFixed(2)}</p>
-
-              <div className="mb-8">
-                <h3 className="text-lg font-medium mb-2">Descripción</h3>
-                <p className="text-gray-700">{product.description}</p>
+            <div className="p-6 flex flex-col h-full">
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold mb-2">{product.nombre}</h2>
+                <p className="text-3xl font-bold text-primary mb-4">
+                  ${product.precio.toFixed(2)}
+                </p>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-medium mb-1">Descripción</h3>
+                    <p className="text-muted-foreground">{product.descripcion}</p>
+                  </div>
+                  <div>
+                    <h3 className="font-medium mb-1">Categoría</h3>
+                    <p className="text-muted-foreground capitalize">{product.categoria}</p>
+                  </div>
+                  <div>
+                    <h3 className="font-medium mb-1">Stock disponible</h3>
+                    <p className="text-muted-foreground">{product.stock} unidades</p>
+                  </div>
+                </div>
               </div>
 
-              <div className="mt-auto space-y-4">
+              <div className="pt-6 mt-6 border-t space-y-4">
                 <Button 
                   className="w-full" 
-                  size="lg" 
-                  onClick={() => addToCart(product.id)}
+                  size="lg"
+                  onClick={() => {
+                    addToCart(product.id)
+                    onClose()
+                  }}
+                  disabled={product.stock === 0}
                 >
                   <ShoppingCart className="h-5 w-5 mr-2" />
-                  Agregar al carrito
+                  {product.stock > 0 ? "Agregar al carrito" : "Sin stock"}
                 </Button>
-                <Button variant="outline" className="w-full" size="lg">
-                  Contactar para comprar
-                </Button>
-              </div>
-
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <h3 className="text-lg font-medium mb-4">Preguntas sobre este producto</h3>
+                
                 <ChatInterface productId={product.id} />
               </div>
             </div>

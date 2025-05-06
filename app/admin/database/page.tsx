@@ -3,18 +3,35 @@
 import { useState } from "react"
 import { useToast } from "@/components/ui/use-toast"
 import { exportDatabase } from "@/lib/export-actions"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+
+type TableSelection = {
+  products: boolean
+  messages: boolean
+  users: boolean
+}
 
 export default function DatabasePage() {
   const { toast } = useToast()
   const [isExporting, setIsExporting] = useState(false)
   const [exportFormat, setExportFormat] = useState("json")
-  const [selectedTables, setSelectedTables] = useState({
+  const [selectedTables, setSelectedTables] = useState<TableSelection>({
     products: true,
     messages: true,
     users: true,
   })
 
-  const handleCheckboxChange = (table: string) => {
+  const handleCheckboxChange = (table: keyof TableSelection) => {
     setSelectedTables({
       ...selectedTables,
       [table]: !selectedTables[table],
@@ -43,10 +60,21 @@ export default function DatabasePage() {
         tables: selectedTablesList,
       })
 
+      let blobContent;
+      let mimeType;
+
+      if (exportFormat === "json") {
+        // Asegurarse de que el resultado sea una cadena JSON válida
+        blobContent = typeof result === 'string' ? result : JSON.stringify(result, null, 2);
+        mimeType = "application/json";
+      } else {
+        // Para CSV, usar el resultado directamente
+        blobContent = result;
+        mimeType = "text/csv";
+      }
+
       // Crear un blob con el contenido exportado
-      const blob = new Blob([result], {
-        type: exportFormat === "json" ? "application/json" : "text/csv",
-      })
+      const blob = new Blob([blobContent], { type: mimeType });
 
       // Crear una URL para el blob
       const url = URL.createObjectURL(blob)
@@ -103,7 +131,7 @@ export default function DatabasePage() {
                 <input
                   type="checkbox"
                   checked={selected}
-                  onChange={() => handleCheckboxChange(table)}
+                  onChange={() => handleCheckboxChange(table as keyof TableSelection)}
                   className="form-checkbox"
                 />
                 <span>{table}</span>
@@ -112,13 +140,31 @@ export default function DatabasePage() {
           </div>
         </div>
 
-        <button
-          onClick={handleExport}
-          disabled={isExporting}
-          className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
-        >
-          {isExporting ? "Exportando..." : "Exportar"}
-        </button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button
+              disabled={isExporting}
+              className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
+            >
+              {isExporting ? "Exportando..." : "Exportar"}
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Desea continuar con la iteración?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta acción exportará las tablas seleccionadas de la base de datos. 
+                Asegúrese de haber seleccionado todas las tablas necesarias.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleExport}>
+                Continuar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   )

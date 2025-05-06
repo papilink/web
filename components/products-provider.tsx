@@ -1,75 +1,27 @@
 "use client"
 
-import { createContext, useContext, useState } from "react"
+import { createContext, useContext, useState, useEffect, useCallback } from "react"
+import { useToast } from "@/hooks/use-toast"
 
 interface Product {
-  id: number
-  name: string
-  price: number
-  description: string
-  image: string
-  category: string
+  id: string
+  nombre: string
+  descripcion: string
+  precio: number
   stock: number
+  categoria: string
+  imagen: string
 }
-
-// Datos iniciales de productos (en un sistema real, esto vendría de una API)
-const initialProducts: Product[] = [
-  {
-    id: 1,
-    name: "Lavarropas Samsung",
-    price: 450.99,
-    description: "Lavarropas automático Samsung con múltiples programas de lavado. Excelente estado.",
-    image: "/images/lava10.jpg",
-    category: "lavarropas",
-    stock: 5
-  },
-  {
-    id: 2,
-    name: "Notebook Lenovo",
-    price: 620.0,
-    description: "Notebook Lenovo ThinkPad en perfecto estado. Ideal para trabajo y estudio.",
-    image: "/images/lava10.jpg",
-    category: "notebooks",
-    stock: 3
-  },
-  {
-    id: 3,
-    name: "PC de Escritorio HP",
-    price: 585.5,
-    description: "Computadora de escritorio HP con monitor incluido. Lista para usar.",
-    image: "/images/lava10.jpg",
-    category: "computadora PC",
-    stock: 2
-  },
-  {
-    id: 4,
-    name: "Ventilador de Pie",
-    price: 35.25,
-    description: "Ventilador de pie con 3 velocidades y oscilación. Perfecto para el verano.",
-    image: "/images/lava10.jpg",
-    category: "varios",
-    stock: 10
-  },
-  {
-    id: 5,
-    name: "Monitor Gaming",
-    price: 240.0,
-    description: "Monitor gaming de 24 pulgadas, 144Hz. Ideal para juegos.",
-    image: "/images/lava10.jpg",
-    category: "computadora PC",
-    stock: 1
-  }
-]
 
 interface ProductsContextType {
   products: Product[]
-  updateProduct: (id: number, updates: Partial<Product>) => void
-  addProduct: (product: Omit<Product, "id">) => void
-  removeProduct: (id: number) => void
-  searchProducts: (query: string) => Product[]
-  filteredProducts: Product[]
-  searchQuery: string
-  setSearchQuery: (query: string) => void
+  loading: boolean
+  error: string | null
+  refreshProducts: () => Promise<void>
+  addProduct: (product: Omit<Product, 'id'>) => Promise<Product>
+  updateProduct: (id: string, product: Partial<Product>) => Promise<Product>
+  deleteProduct: (id: string) => Promise<void>
+  getProduct: (id: string) => Promise<Product>
 }
 
 const ProductsContext = createContext<ProductsContextType | undefined>(undefined)
@@ -82,60 +34,169 @@ export function useProducts() {
   return context
 }
 
+const MAX_RETRIES = 3
+const RETRY_DELAY = 2000
+
 export default function ProductsProvider({ children }: { children: React.ReactNode }) {
-  const [products, setProducts] = useState<Product[]>(initialProducts)
-  const [searchQuery, setSearchQuery] = useState("")
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
+  const { toast } = useToast()
 
-  const searchProducts = (query: string) => {
-    const normalizedQuery = query.toLowerCase().trim()
-    if (!normalizedQuery) return products
+  const fetchProducts = useCallback(async (retryAttempt = 0) => {
+    try {
+      setLoading(true)
+      setError(null)
 
-    return products.filter(product => {
-      const inName = product.name.toLowerCase().includes(normalizedQuery)
-      const inDescription = product.description.toLowerCase().includes(normalizedQuery)
-      const inCategory = product.category?.toLowerCase().includes(normalizedQuery)
-      return inName || inDescription || inCategory
-    })
-  }
-
-  const filteredProducts = searchProducts(searchQuery)
-
-  const updateProduct = (id: number, updates: Partial<Product>) => {
-    setProducts(currentProducts =>
-      currentProducts.map(product =>
-        product.id === id
-          ? { ...product, ...updates }
-          : product
-      )
-    )
-  }
-
-  const addProduct = (product: Omit<Product, "id">) => {
-    setProducts(currentProducts => [
-      ...currentProducts,
-      {
-        ...product,
-        id: Math.max(0, ...currentProducts.map(p => p.id)) + 1
+      const response = await fetch('/api/productos')
+      
+      if (!response.ok) {
+        throw new Error(`Error al cargar productos: ${response.status} ${response.statusText}`)
       }
-    ])
+      
+      const data = await response.json()
+      
+      if (!Array.isArray(data)) {
+        throw new Error('El formato de datos recibido no es válido')
+      }
+
+      const validProducts = data.filter(isValidProduct)
+      setProducts(validProducts)
+      setRetryCount(0)
+    } catch (error) {
+      console.error('Error al cargar productos:', error)
+      setError(error instanceof Error ? error.message : 'Error desconocido')
+
+      if (retryAttempt < MAX_RETRIES) {
+        setTimeout(() => {
+          setRetryCount(retryAttempt + 1)
+          fetchProducts(retryAttempt + 1)
+        }, RETRY_DELAY)
+      } else {
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los productos después de varios intentos. Por favor, recarga la página.",
+          variant: "destructive",
+        })
+      }
+    } finally {
+      if (retryCount === retryAttempt) {
+        setLoading(false)
+      }
+    }
+  }, [toast])
+
+  const addProduct = async (product: Omit<Product, 'id'>): Promise<Product> => {
+    try {
+      const response = await fetch('/api/productos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(product),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Error al crear el producto')
+      }
+
+      const newProduct = await response.json()
+      setProducts(current => [...current, newProduct])
+      return newProduct
+    } catch (error) {
+      console.error('Error al añadir producto:', error)
+      throw error
+    }
   }
 
-  const removeProduct = (id: number) => {
-    setProducts(currentProducts =>
-      currentProducts.filter(product => product.id !== id)
+  const updateProduct = async (id: string, product: Partial<Product>): Promise<Product> => {
+    try {
+      const response = await fetch(`/api/productos?id=${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(product),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Error al actualizar el producto')
+      }
+
+      const updatedProduct = await response.json()
+      setProducts(current =>
+        current.map(p => p.id === id ? updatedProduct : p)
+      )
+      return updatedProduct
+    } catch (error) {
+      console.error('Error al actualizar producto:', error)
+      throw error
+    }
+  }
+
+  const deleteProduct = async (id: string): Promise<void> => {
+    try {
+      const response = await fetch(`/api/productos?id=${id}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Error al eliminar el producto')
+      }
+
+      setProducts(current => current.filter(p => p.id !== id))
+    } catch (error) {
+      console.error('Error al eliminar producto:', error)
+      throw error
+    }
+  }
+
+  const getProduct = async (id: string): Promise<Product> => {
+    try {
+      const response = await fetch(`/api/productos?id=${id}`)
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Error al obtener el producto')
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error al obtener producto:', error)
+      throw error
+    }
+  }
+
+  const isValidProduct = (product: any): product is Product => {
+    return (
+      typeof product.id === 'string' &&
+      typeof product.nombre === 'string' &&
+      typeof product.descripcion === 'string' &&
+      typeof product.precio === 'number' &&
+      typeof product.stock === 'number' &&
+      typeof product.categoria === 'string' &&
+      typeof product.imagen === 'string'
     )
   }
+
+  useEffect(() => {
+    fetchProducts()
+  }, [fetchProducts])
 
   return (
     <ProductsContext.Provider value={{
       products,
-      updateProduct,
+      loading,
+      error,
+      refreshProducts: () => fetchProducts(0),
       addProduct,
-      removeProduct,
-      searchProducts,
-      filteredProducts,
-      searchQuery,
-      setSearchQuery
+      updateProduct,
+      deleteProduct,
+      getProduct
     }}>
       {children}
     </ProductsContext.Provider>

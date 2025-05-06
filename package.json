@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "export": "next build && next export",
-    "deploy": "next build && touch out/.nojekyll && git add out/ && git commit -m \"Deploy to gh-pages\" && git subtree push --prefix out origin gh-pages"
+    "deploy": "next build && touch out/.nojekyll && git add out/ && git commit -m \"Deploy to gh-pages\" && git subtree push --prefix out origin gh-pages",
+    "seed": "tsx scripts/seed.ts"
   },
   "dependencies": {
     "@emotion/is-prop-valid": "latest",
@@ -49,12 +50,15 @@
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",
     "date-fns": "4.1.0",
+    "dotenv": "^16.5.0",
     "embla-carousel-react": "8.5.1",
     "framer-motion": "latest",
     "input-otp": "1.4.1",
     "lucide-react": "^0.454.0",
+    "mysql2": "^3.14.1",
     "next": "15.2.4",
     "next-themes": "^0.4.4",
+    "pg": "^8.15.6",
     "react": "^19",
     "react-day-picker": "8.10.1",
     "react-dom": "^19",
@@ -74,6 +78,8 @@
     "postcss": "^8",
     "postcss-preset-env": "^10.1.6",
     "tailwindcss": "^3.4.17",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.4",
     "typescript": "^5"
   }
 }

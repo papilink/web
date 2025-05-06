@@ -4,17 +4,17 @@ import { createContext, useContext, useState, useEffect } from "react"
 import { useToast } from "@/hooks/use-toast"
 
 interface CartItem {
-  id: number
+  id: string
   quantity: number
 }
 
 interface CartContextType {
   cart: CartItem[]
-  addToCart: (productId: number) => void
-  removeFromCart: (productId: number) => void
-  updateQuantity: (productId: number, quantity: number) => void
+  addToCart: (productId: string) => void
+  removeFromCart: (productId: string) => void
+  updateQuantity: (productId: string, quantity: number) => void
   clearCart: () => void
-  getItemQuantity: (productId: number) => number
+  getItemQuantity: (productId: string) => number
   getTotalItems: () => number
 }
 
@@ -49,7 +49,7 @@ export default function CartProvider({ children }) {
     localStorage.setItem("lulaweb-cart", JSON.stringify(cart))
   }, [cart])
 
-  const addToCart = (productId: number) => {
+  const addToCart = (productId: string) => {
     setCart(currentCart => {
       const existingItem = currentCart.find(item => item.id === productId)
       if (existingItem) {
@@ -67,7 +67,7 @@ export default function CartProvider({ children }) {
     })
   }
 
-  const removeFromCart = (productId: number) => {
+  const removeFromCart = (productId: string) => {
     setCart(currentCart => currentCart.filter(item => item.id !== productId))
     toast({
       title: "Producto eliminado",
@@ -76,7 +76,7 @@ export default function CartProvider({ children }) {
     })
   }
 
-  const updateQuantity = (productId: number, quantity: number) => {
+  const updateQuantity = (productId: string, quantity: number) => {
     if (quantity < 1) {
       removeFromCart(productId)
       return
@@ -99,7 +99,7 @@ export default function CartProvider({ children }) {
     })
   }
 
-  const getItemQuantity = (productId: number) => {
+  const getItemQuantity = (productId: string) => {
     return cart.find(item => item.id === productId)?.quantity || 0
   }
 

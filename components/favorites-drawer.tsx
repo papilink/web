@@ -1,30 +1,51 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { X, Heart } from "lucide-react"
+import { useState } from "react"
 import Image from "next/image"
+import { X } from "lucide-react"
+import { motion } from "framer-motion"
 
 import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import HeartIconButton from "@/components/heart-icon-button"
+import { Card } from "@/components/ui/card"
+import { useProducts } from "@/components/products-provider"
 
-export default function FavoritesDrawer({ favorites = [], products = [], onClose, onRemoveFavorite }) {
+interface Product {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  precio: number;
+  stock: number;
+  categoria: string;
+  imagen: string;
+}
+
+interface FavoritesDrawerProps {
+  favorites: string[]
+  onClose: () => void
+  onRemoveFavorite: (productId: string) => void
+}
+
+export default function FavoritesDrawer({ favorites = [], onClose, onRemoveFavorite }: FavoritesDrawerProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const { products } = useProducts()
 
-  useEffect(() => {
+  // Efecto de entrada
+  useState(() => {
     const timer = setTimeout(() => {
       setIsOpen(true)
     }, 50)
     return () => clearTimeout(timer)
-  }, [])
-
-  const favoriteProducts = products.filter((product) => favorites.includes(product.id))
+  })
 
   const handleClose = () => {
     setIsOpen(false)
     setTimeout(onClose, 300)
   }
 
+  // Filtrar productos favoritos
+  const favoriteProducts = products.filter(product => favorites.includes(product.id))
+
+  // Si no hay favoritos
   if (favoriteProducts.length === 0) {
     return (
       <div
@@ -32,21 +53,11 @@ export default function FavoritesDrawer({ favorites = [], products = [], onClose
           isOpen ? "translate-x-0" : "translate-x-full"
         } animate-in slide-in-from-right`}
       >
-        <div className="flex items-center justify-between p-4 border-b animate-in fade-in slide-in-from-top duration-300">
-          <div className="flex items-center gap-2">
-            <Heart className="h-5 w-5 text-red-500 animate-pulse" />
-            <h2 className="text-lg font-semibold">Mis Favoritos</h2>
-          </div>
-          <Button variant="ghost" size="icon" onClick={handleClose} className="hover-scale active-scale">
+        <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+          <Button variant="ghost" size="icon" className="absolute right-4 top-4" onClick={handleClose}>
             <X className="h-5 w-5" />
             <span className="sr-only">Cerrar</span>
           </Button>
-        </div>
-
-        <div className="flex flex-col items-center justify-center h-[calc(100vh-73px)] p-6 text-center animate-in fade-in-50 duration-500">
-          <div className="relative h-20 w-20 mb-4 animate-in zoom-in-50 duration-500">
-            <HeartIconButton productId={0} size="lg" className="pointer-events-none" />
-          </div>
           <h3 className="text-lg font-medium mb-2 animate-in fade-in-50 slide-in-from-bottom-2">No tienes favoritos</h3>
           <p className="text-gray-500 mb-6 animate-in fade-in-50 slide-in-from-bottom-3">
             Guarda tus productos favoritos haciendo clic en el corazón en cada producto.
@@ -64,54 +75,55 @@ export default function FavoritesDrawer({ favorites = [], products = [], onClose
       } animate-in slide-in-from-right`}
     >
       <div className="flex items-center justify-between p-4 border-b animate-in fade-in slide-in-from-top duration-300">
-        <div className="flex items-center gap-2">
-          <Heart className="h-5 w-5 text-red-500 animate-pulse" />
-          <h2 className="text-lg font-semibold">Mis Favoritos</h2>
-          <span className="bg-gray-100 text-gray-700 text-xs font-medium px-2 py-0.5 rounded-full animate-in zoom-in duration-300">
-            {favoriteProducts.length}
-          </span>
-        </div>
-        <Button variant="ghost" size="icon" onClick={handleClose} className="hover-scale active-scale">
+        <h2 className="text-lg font-semibold">Mis Favoritos</h2>
+        <Button variant="ghost" size="icon" onClick={handleClose}>
           <X className="h-5 w-5" />
           <span className="sr-only">Cerrar</span>
         </Button>
       </div>
 
-      <ScrollArea className="h-[calc(100vh-73px)]">
-        <div className="p-4 space-y-4">
+      <div className="p-4 space-y-4 overflow-auto max-h-[calc(100vh-73px)]">
+        <motion.div
+          layout
+          className="space-y-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
           {favoriteProducts.map((product, index) => (
-            <div 
-              key={product.id} 
-              className="flex gap-4 p-3 rounded-lg border hover:bg-gray-50 transition-smooth card-hover animate-in fade-in-50 slide-in-from-right duration-300"
-              style={{ animationDelay: `${index * 100}ms` }}
+            <motion.div
+              key={product.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
             >
-              <div className="relative h-20 w-20 flex-shrink-0 rounded-md overflow-hidden">
-                <Image src={product.image || "/placeholder.svg"} alt={product.name} fill className="object-cover hover:scale-110 transition-transform duration-300" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-gray-900 truncate">{product.name}</h3>
-                <p className="text-sm text-gray-500 truncate">${product.price.toFixed(2)}</p>
-                <div className="mt-2">
-                  <Button variant="outline" size="sm" className="text-xs h-8 btn-animated">
-                    Ver detalles
-                  </Button>
+              <Card className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors">
+                <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md">
+                  <Image
+                    src={product.imagen || "/placeholder.svg"}
+                    alt={product.nombre}
+                    fill
+                    className="object-cover"
+                  />
                 </div>
-              </div>
-              <div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-gray-900 truncate">{product.nombre}</h3>
+                  <p className="text-sm text-gray-500">${product.precio.toFixed(2)}</p>
+                </div>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 hover-scale active-scale"
                   onClick={() => onRemoveFavorite(product.id)}
+                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
                 >
                   <X className="h-4 w-4" />
-                  <span className="sr-only">Eliminar</span>
+                  <span className="sr-only">Eliminar de favoritos</span>
                 </Button>
-              </div>
-            </div>
+              </Card>
+            </motion.div>
           ))}
-        </div>
-      </ScrollArea>
+        </motion.div>
+      </div>
     </div>
   )
 }
