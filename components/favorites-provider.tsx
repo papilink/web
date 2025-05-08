@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useState, useContext, useEffect } from "react"
+import { createContext, useState, useContext, useEffect, ReactNode } from "react"
 
 // Crear el contexto
 export const FavoritesContext = createContext({
@@ -15,7 +15,7 @@ export const FavoritesContext = createContext({
 export const useFavorites = () => useContext(FavoritesContext)
 
 // Proveedor del contexto
-export default function FavoritesProvider({ children }) {
+export default function FavoritesProvider({ children }: { children: ReactNode }) {
   const [favorites, setFavorites] = useState<string[]>([])
 
   // Cargar favoritos del localStorage al iniciar
@@ -25,7 +25,8 @@ export default function FavoritesProvider({ children }) {
       try {
         setFavorites(JSON.parse(storedFavorites))
       } catch (error) {
-        console.error("Error parsing favorites from localStorage:", error)
+        console.error("Error al analizar los favoritos desde localStorage:", error);
+        setFavorites([]); // Establecer una lista de favoritos vacía en caso de error
       }
     }
   }, [])
@@ -57,7 +58,7 @@ export default function FavoritesProvider({ children }) {
   }
 
   // Verificar si un producto está en favoritos
-  const isFavorite = (productId: string) => {
+  const isFavorite = (productId: string): boolean => {
     return favorites.includes(productId)
   }
 

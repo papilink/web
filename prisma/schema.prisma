@@ -2,10 +2,8 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 datasource db {
-  provider     = "mysql"
-  url          = env("DATABASE_URL")
-  relationMode = "prisma"
-  directUrl    = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 generator client {
@@ -15,28 +13,27 @@ generator client {
 
 model Producto {
   id          String    @id @default(cuid())
-  nombre      String    @db.VarChar(255)
-  descripcion String    @db.Text
-  precio      Float     @db.Float
+  nombre      String
+  descripcion String
+  precio      Float
   stock       Int       @default(0)
-  categoria   String    @db.VarChar(100)
-  imagen      String    @db.VarChar(255)
-  createdAt   DateTime  @default(now()) @db.Timestamp(6)
-  updatedAt   DateTime  @updatedAt @db.Timestamp(6)
-  categoriaRef Categoria @relation(fields: [categoria], references: [nombre])
+  imagen      String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  categoria   Categoria @relation(fields: [categoriaId], references: [id])
+  categoriaId String    
 
   @@index([nombre])
-  @@index([categoria])
-  @@fulltext([nombre, descripcion])
+  @@index([categoriaId])
 }
 
 model Categoria {
   id          String    @id @default(cuid())
-  nombre      String    @unique @db.VarChar(100)
-  descripcion String?   @db.Text
+  nombre      String    @unique
+  descripcion String?
   productos   Producto[]
-  createdAt   DateTime  @default(now()) @db.Timestamp(6)
-  updatedAt   DateTime  @updatedAt @db.Timestamp(6)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@index([nombre])
 }

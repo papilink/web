@@ -49,7 +49,7 @@ export default function ProductsProvider({ children }: { children: React.ReactNo
       setLoading(true)
       setError(null)
 
-      const response = await fetch('/api/productos')
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || ''}/api/productos`);
       
       if (!response.ok) {
         throw new Error(`Error al cargar productos: ${response.status} ${response.statusText}`)

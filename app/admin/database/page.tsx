@@ -151,7 +151,7 @@ export default function DatabasePage() {
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>¿Desea continuar con la iteración?</AlertDialogTitle>
+              <AlertDialogTitle>¿Desea continuar?</AlertDialogTitle>
               <AlertDialogDescription>
                 Esta acción exportará las tablas seleccionadas de la base de datos. 
                 Asegúrese de haber seleccionado todas las tablas necesarias.

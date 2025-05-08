@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from "react"
 import { useToast } from "@/hooks/use-toast"
+import { ReactNode } from "react";
 
 interface CartItem {
   id: string
@@ -28,7 +29,7 @@ export function useCart() {
   return context
 }
 
-export default function CartProvider({ children }) {
+export default function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([])
   const { toast } = useToast()
 
@@ -39,7 +40,8 @@ export default function CartProvider({ children }) {
       try {
         setCart(JSON.parse(storedCart))
       } catch (error) {
-        console.error("Error al cargar el carrito desde localStorage:", error)
+        console.error("Error al analizar el carrito desde localStorage:", error)
+        setCart([]) // Establecer un carrito vacío en caso de error
       }
     }
   }, [])

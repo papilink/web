@@ -110,6 +110,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                   src={item.product?.imagen || "/placeholder.svg"}
                   alt={item.product?.nombre || ""}
                   fill
+                  sizes="(max-width: 768px) 100vw, 80px"
                   className="object-cover"
                 />
               </div>

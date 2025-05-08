@@ -61,7 +61,7 @@ export default function SiteHeader() {
               alt="Lulaweb Logo"
               width={32}
               height={32}
-              className="rounded-lg"
+              className="rounded-lg w-auto h-auto"
             />
             <span className="font-bold text-xl">{siteConfig.name}</span>
           </Link>
@@ -94,7 +94,7 @@ export default function SiteHeader() {
             alt="Lulaweb Logo"
             width={28}
             height={28}
-            className="rounded-lg"
+            className="rounded-lg w-auto h-auto"
           />
           <span className="font-bold text-xl">{siteConfig.name}</span>
         </Link>

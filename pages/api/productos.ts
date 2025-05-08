@@ -17,6 +17,23 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Producto | Producto[] | { error: string } | { message: string }>
 ) {
+  // Configurar headers CORS
+  const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000'];
+  const origin = req.headers.origin;
+  
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+
+  // Manejar la solicitud OPTIONS del preflight CORS
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   res.setHeader('Content-Type', 'application/json')
 
   try {
@@ -25,19 +42,32 @@ export default async function handler(
         if (req.query.id) {
           const producto = await prisma.producto.findUnique({
             where: { id: req.query.id as string },
-            include: { categoriaRef: true }
+            include: { categoria: true }
           })
           
           if (!producto) {
             return res.status(404).json({ error: 'Producto no encontrado' })
           }
           
-          return res.status(200).json(producto)
+          // Transformar el resultado para que coincida con la interfaz Producto
+          const productoFormateado: Producto = {
+            ...producto,
+            categoria: producto.categoria?.nombre || 'Sin categoría'
+          }
+          
+          return res.status(200).json(productoFormateado)
         } else {
           const productos = await prisma.producto.findMany({
-            include: { categoriaRef: true }
+            include: { categoria: true }
           })
-          return res.status(200).json(productos)
+          
+          // Transformar los resultados para que coincidan con la interfaz Producto
+          const productosFormateados: Producto[] = productos.map(p => ({
+            ...p,
+            categoria: p.categoria?.nombre || 'Sin categoría'
+          }))
+          
+          return res.status(200).json(productosFormateados)
         }
 
       case 'POST':
@@ -60,7 +90,7 @@ export default async function handler(
         }
 
         // Crear o actualizar la categoría primero
-        await prisma.categoria.upsert({
+        const categoriaCreada = await prisma.categoria.upsert({
           where: { nombre: categoria },
           update: {},
           create: {
@@ -76,13 +106,19 @@ export default async function handler(
             descripcion,
             precio: precioNum,
             stock: stockNum,
-            categoria,
+            categoriaId: categoriaCreada.id,
             imagen: imagen || '/placeholder.svg'
           },
-          include: { categoriaRef: true }
+          include: { categoria: true }
         })
 
-        return res.status(201).json(nuevoProducto)
+        // Transformar el resultado
+        const nuevoProductoFormateado: Producto = {
+          ...nuevoProducto,
+          categoria: nuevoProducto.categoria.nombre
+        }
+
+        return res.status(201).json(nuevoProductoFormateado)
 
       case 'PUT':
         const { id } = req.query
@@ -105,8 +141,9 @@ export default async function handler(
           }
         }
 
+        let categoriaId: string | undefined
         if (datosActualizacion.categoria) {
-          await prisma.categoria.upsert({
+          const categoria = await prisma.categoria.upsert({
             where: { nombre: datosActualizacion.categoria },
             update: {},
             create: {
@@ -114,15 +151,25 @@ export default async function handler(
               descripcion: `Categoría ${datosActualizacion.categoria}`
             }
           })
+          categoriaId = categoria.id
         }
 
         const productoActualizado = await prisma.producto.update({
           where: { id },
-          data: datosActualizacion,
-          include: { categoriaRef: true }
+          data: {
+            ...datosActualizacion,
+            categoriaId: categoriaId
+          },
+          include: { categoria: true }
         })
 
-        return res.status(200).json(productoActualizado)
+        // Transformar el resultado
+        const productoActualizadoFormateado: Producto = {
+          ...productoActualizado,
+          categoria: productoActualizado.categoria.nombre
+        }
+
+        return res.status(200).json(productoActualizadoFormateado)
 
       case 'DELETE':
         const productId = req.query.id

@@ -37,58 +37,31 @@ interface Video {
 const initialProducts: Product[] = [
   {
     id: 1,
-    name: "Lámpara Vintage",
-    price: 45.99,
-    description: "Lámpara de mesa estilo vintage en excelente estado. Perfecta para dar un toque retro a cualquier habitación.",
+    name: "Notebook HP ProBook",
+    price: 899.99,
+    description: "Notebook HP ProBook con procesador Intel i5, 8GB RAM, 256GB SSD.",
     image: "/images/lava10.jpg",
-    category: "iluminación",
+    category: "notebooks",
     stock: 5
   },
   {
     id: 2,
-    name: "Silla de Diseñador",
-    price: 120.0,
-    description: "Silla de diseñador en madera y cuero. Muy cómoda y en perfecto estado.",
+    name: "PC Desktop Gamer",
+    price: 1200.0,
+    description: "PC de escritorio gaming con RTX 3060, Ryzen 7, 16GB RAM",
     image: "/images/lava10.jpg",
-    category: "muebles",
+    category: "pcs-desktop",
     stock: 3
   },
   {
     id: 3,
-    name: "Mesa de Centro",
-    price: 85.5,
-    description: "Mesa de centro de cristal con base de madera. Elegante y funcional.",
+    name: "Lavarropas Samsung",
+    price: 485.5,
+    description: "Lavarropas Samsung 8kg con carga frontal y múltiples programas",
     image: "/images/lava10.jpg",
-    category: "muebles",
+    category: "lavarropas",
     stock: 2
-  },
-  {
-    id: 4,
-    name: "Jarrón Decorativo",
-    price: 35.25,
-    description: "Jarrón decorativo de cerámica pintado a mano. Pieza única.",
-    image: "/images/lava10.jpg",
-    category: "decoración",
-    stock: 10
-  },
-  {
-    id: 5,
-    name: "Cuadro Abstracto",
-    price: 75.0,
-    description: "Cuadro abstracto con marco de madera. Colores vibrantes que darán vida a tu espacio.",
-    image: "/images/lava10.jpg",
-    category: "decoración",
-    stock: 4
-  },
-  {
-    id: 6,
-    name: "Reloj de Pared",
-    price: 40.0,
-    description: "Reloj de pared estilo industrial. Funciona perfectamente.",
-    image: "/images/lava10.jpg",
-    category: "decoración",
-    stock: 1
-  },
+  }
 ]
 
 // Datos de ejemplo para los videos
@@ -202,7 +175,7 @@ export default function Home() {
                 alt="Lulaweb Logo"
                 width={50}
                 height={50}
-                className="rounded-lg"
+                className="rounded-lg w-auto h-auto"
               />
               <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
                 Lula<span className="text-primary">web</span>
@@ -298,6 +271,7 @@ export default function Home() {
                         alt={product.name}
                         fill
                         priority={product.id === 1}
+                        sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                         className="object-cover transition-transform duration-500 group-hover:scale-110"
                       />
 

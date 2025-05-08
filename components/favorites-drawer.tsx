@@ -103,6 +103,7 @@ export default function FavoritesDrawer({ favorites = [], onClose, onRemoveFavor
                     src={product.imagen || "/placeholder.svg"}
                     alt={product.nombre}
                     fill
+                    sizes="(max-width: 768px) 100vw, 64px"
                     className="object-cover"
                   />
                 </div>

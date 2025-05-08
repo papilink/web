@@ -371,6 +371,7 @@ export default function AdminVideosPage() {
                             src={video.thumbnail || "/images/lava10.jpg"}
                             alt={video.title}
                             fill
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 200px"
                             className="object-cover"
                           />
                           <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">

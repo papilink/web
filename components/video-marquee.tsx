@@ -196,6 +196,7 @@ export default function VideoMarquee({ videos, autoPlay = true, interval = 5000 
               src={video.thumbnail || "/images/lava10.jpg"}
               alt={video.title}
               fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-cover transform transition-transform duration-300 hover:scale-110"
               priority={index === currentIndex}
             />

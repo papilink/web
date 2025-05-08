@@ -6,6 +6,7 @@ import { X, ShoppingCart } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import ChatInterface from "@/components/chat-interface"
 import HeartIconButton from "@/components/heart-icon-button"
 import { useCart } from "@/components/cart-provider"
@@ -15,6 +16,8 @@ interface Product {
   nombre: string;
   descripcion: string;
   precio: number;
+  precioOriginal?: number;
+  porcentajeDescuento?: number;
   stock: number;
   categoria: string;
   imagen: string;
@@ -64,7 +67,13 @@ export default function ProductModal({ product, isOpen, onClose }: ProductModalP
         <CardContent className="p-0">
           <div className="grid md:grid-cols-2 gap-0">
             <div className="relative h-[300px] md:h-[500px] bg-gray-100">
-              <Image src={product.imagen || "/placeholder.svg"} alt={product.nombre} fill className="object-cover" />
+              <Image
+                src={product.imagen || "/placeholder.svg"}
+                alt={product.nombre}
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                className="object-contain"
+              />
 
               {/* Botón de corazón en la esquina superior derecha */}
               <div className="absolute top-4 left-4">
@@ -75,9 +84,21 @@ export default function ProductModal({ product, isOpen, onClose }: ProductModalP
             <div className="p-6 flex flex-col h-full">
               <div className="flex-1">
                 <h2 className="text-2xl font-bold mb-2">{product.nombre}</h2>
-                <p className="text-3xl font-bold text-primary mb-4">
-                  ${product.precio.toFixed(2)}
-                </p>
+                <div className="flex items-baseline gap-2 mb-4">
+                  <p className="text-3xl font-bold text-primary">
+                    ${typeof product.precio === 'number' ? product.precio.toFixed(2) : '0.00'}
+                  </p>
+                  {product.precioOriginal && (
+                    <p className="text-lg text-muted-foreground line-through">
+                      ${product.precioOriginal.toFixed(2)}
+                    </p>
+                  )}
+                  {product.porcentajeDescuento && (
+                    <Badge variant="destructive" className="ml-2">
+                      -{product.porcentajeDescuento}% OFF
+                    </Badge>
+                  )}
+                </div>
                 <div className="space-y-4">
                   <div>
                     <h3 className="font-medium mb-1">Descripción</h3>

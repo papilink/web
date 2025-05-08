@@ -15,73 +15,51 @@ import { useToast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
 
 interface Product {
-  id: number
-  name: string
-  price: number
-  description: string
-  image: string
-  category: string
+  id: string
+  nombre: string
+  precio: number
+  descripcion: string
+  imagen: string
+  categoria: string
   stock: number
-  originalPrice?: number
-  discountPercentage?: number
+  precioOriginal?: number
+  porcentajeDescuento?: number
 }
 
 // Datos de ejemplo con descuentos
 const discountedProducts: Product[] = [
   {
-    id: 1,
-    name: "Lámpara Vintage",
-    price: 35.99,
-    originalPrice: 45.99,
-    discountPercentage: 22,
-    description: "Lámpara de mesa estilo vintage en excelente estado. Perfecta para dar un toque retro a cualquier habitación.",
-    image: "/images/lava10.jpg",
-    category: "iluminación",
+    id: "1",
+    nombre: "Notebook Lenovo ThinkPad",
+    precio: 799.99,
+    precioOriginal: 999.99,
+    porcentajeDescuento: 20,
+    descripcion: "Notebook Lenovo ThinkPad E14 con Intel Core i5, 16GB RAM, 512GB SSD.",
+    imagen: "/images/lava10.jpg",
+    categoria: "notebooks",
     stock: 5
   },
   {
-    id: 2,
-    name: "Silla de Diseñador",
-    price: 89.99,
-    originalPrice: 120.0,
-    discountPercentage: 25,
-    description: "Silla de diseñador en madera y cuero. Muy cómoda y en perfecto estado.",
-    image: "/images/lava10.jpg",
-    category: "muebles",
+    id: "2",
+    nombre: "PC Desktop Dell",
+    precio: 899.99,
+    precioOriginal: 1200.0,
+    porcentajeDescuento: 25,
+    descripcion: "PC Dell Inspiron con Intel Core i7, 32GB RAM, 1TB SSD, RTX 3070.",
+    imagen: "/images/lava10.jpg",
+    categoria: "pcs-desktop",
     stock: 3
   },
   {
-    id: 3,
-    name: "Mesa de Centro",
-    price: 69.99,
-    originalPrice: 85.5,
-    discountPercentage: 18,
-    description: "Mesa de centro de cristal con base de madera. Elegante y funcional.",
-    image: "/images/lava10.jpg",
-    category: "muebles",
+    id: "3",
+    nombre: "Lavarropas Whirlpool",
+    precio: 399.99,
+    precioOriginal: 485.5,
+    porcentajeDescuento: 18,
+    descripcion: "Lavarropas Whirlpool 9kg automático con tecnología de lavado inteligente.",
+    imagen: "/images/lava10.jpg",
+    categoria: "lavarropas",
     stock: 2
-  },
-  {
-    id: 4,
-    name: "Cuadro Abstracto",
-    price: 55.0,
-    originalPrice: 75.0,
-    discountPercentage: 27,
-    description: "Cuadro abstracto con marco de madera. Colores vibrantes que darán vida a tu espacio.",
-    image: "/images/lava10.jpg",
-    category: "decoración",
-    stock: 4
-  },
-  {
-    id: 5,
-    name: "Reloj de Pared",
-    price: 28.0,
-    originalPrice: 40.0,
-    discountPercentage: 30,
-    description: "Reloj de pared estilo industrial. Funciona perfectamente.",
-    image: "/images/lava10.jpg",
-    category: "decoración",
-    stock: 1
   }
 ]
 
@@ -108,13 +86,13 @@ export default function OffersPage() {
     const sortedProducts = [...products]
     switch (order) {
       case "discount":
-        sortedProducts.sort((a, b) => (b.discountPercentage || 0) - (a.discountPercentage || 0))
+        sortedProducts.sort((a, b) => (b.porcentajeDescuento || 0) - (a.porcentajeDescuento || 0))
         break
       case "price-asc":
-        sortedProducts.sort((a, b) => a.price - b.price)
+        sortedProducts.sort((a, b) => a.precio - b.precio)
         break
       case "price-desc":
-        sortedProducts.sort((a, b) => b.price - a.price)
+        sortedProducts.sort((a, b) => b.precio - a.precio)
         break
       default:
         return setProducts(discountedProducts)
@@ -124,7 +102,7 @@ export default function OffersPage() {
 
   const filteredProducts = useCallback(() => {
     if (filterCategory === "todos") return products
-    return products.filter(product => product.category === filterCategory)
+    return products.filter(product => product.categoria === filterCategory)
   }, [products, filterCategory])
 
   const openProductModal = useCallback((product: Product) => {
@@ -137,7 +115,7 @@ export default function OffersPage() {
     setSelectedProduct(null)
   }, [])
 
-  const handleToggleFavorite = useCallback((productId: number) => {
+  const handleToggleFavorite = useCallback((productId: string) => {
     toggleFavorite(productId)
     const action = isFavorite(productId) ? "eliminado de" : "añadido a"
     toast({
@@ -208,7 +186,7 @@ export default function OffersPage() {
           {/* Filtros y Ordenamiento */}
           <div className="flex flex-wrap gap-4 items-center justify-between mb-8">
             <div className="flex flex-wrap gap-2">
-              {["todos", "muebles", "iluminación", "decoración"].map((category) => (
+              {["todos", "notebooks", "pcs-desktop", "lavarropas"].map((category) => (
                 <Button
                   key={category}
                   variant={filterCategory === category ? "default" : "outline"}
@@ -276,7 +254,7 @@ export default function OffersPage() {
                       <div className="relative" onClick={() => openProductModal(product)}>
                         <div className="relative h-64">
                           <Badge className="absolute top-2 left-2 z-10 bg-red-500 hover:bg-red-500">
-                            -{product.discountPercentage}% OFF
+                            -{product.porcentajeDescuento}% OFF
                           </Badge>
                           {product.stock <= 3 && (
                             <Badge variant="destructive" className="absolute top-2 right-2 z-10">
@@ -294,8 +272,8 @@ export default function OffersPage() {
                           </div>
                           <div className="relative h-full w-full overflow-hidden">
                             <Image
-                              src={product.image}
-                              alt={product.name}
+                              src={product.imagen}
+                              alt={product.nombre}
                               fill
                               className="object-cover transition-transform duration-300 group-hover:scale-110"
                             />
@@ -303,15 +281,15 @@ export default function OffersPage() {
                         </div>
                       </div>
                       <div className="p-4 space-y-2">
-                        <h3 className="font-semibold text-lg line-clamp-1">{product.name}</h3>
+                        <h3 className="font-semibold text-lg line-clamp-1">{product.nombre}</h3>
                         <div className="flex items-center gap-2">
-                          <span className="text-lg font-bold text-primary">${product.price.toFixed(2)}</span>
-                          <span className="text-sm text-muted-foreground line-through">${product.originalPrice?.toFixed(2)}</span>
+                          <span className="text-lg font-bold text-primary">${product.precio.toFixed(2)}</span>
+                          <span className="text-sm text-muted-foreground line-through">${product.precioOriginal?.toFixed(2)}</span>
                           <Badge variant="secondary" className="ml-auto">
-                            Ahorra ${(product.originalPrice! - product.price).toFixed(2)}
+                            Ahorra ${(product.precioOriginal! - product.precio).toFixed(2)}
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground line-clamp-2">{product.description}</p>
+                        <p className="text-sm text-muted-foreground line-clamp-2">{product.descripcion}</p>
                       </div>
                     </Card>
                   </motion.div>

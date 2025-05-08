@@ -111,7 +111,7 @@ export default function AdminPage() {
         return
       }
 
-      const response = await fetch('/api/productos', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || ''}/api/productos`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -162,7 +162,7 @@ export default function AdminPage() {
     if (!editingProduct) return
 
     try {
-      const response = await fetch(`/api/productos?id=${editingProduct.id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || ''}/api/productos?id=${editingProduct.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -203,7 +203,7 @@ export default function AdminPage() {
     if (!id) return
 
     try {
-      const response = await fetch(`/api/productos?id=${id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || ''}/api/productos?id=${id}`, {
         method: 'DELETE',
       })
 
@@ -311,7 +311,7 @@ export default function AdminPage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="category">Categoría</Label>
-                      <Input
+                      <select
                         id="category"
                         name="category"
                         value={newProduct.category}
@@ -319,7 +319,13 @@ export default function AdminPage() {
                           setNewProduct({ ...newProduct, category: e.target.value })
                         }
                         required
-                      />
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      >
+                        <option value="">Selecciona una categoría</option>
+                        <option value="Notebooks">Notebooks</option>
+                        <option value="PCs desktop">PCs desktop</option>
+                        <option value="Lavarropas">Lavarropas</option>
+                      </select>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="description">Descripción</Label>
@@ -341,6 +347,7 @@ export default function AdminPage() {
                             src={previewImage || newProduct.image}
                             alt="Vista previa"
                             fill
+                            sizes="(max-width: 768px) 100vw, 64px"
                             className="object-cover"
                           />
                         </div>
@@ -403,6 +410,7 @@ export default function AdminPage() {
                                 src={product.imagen || "/placeholder.svg"}
                                 alt={product.nombre}
                                 fill
+                                sizes="(max-width: 768px) 100vw, 64px"
                                 className="object-cover"
                               />
                             </div>
@@ -488,7 +496,7 @@ export default function AdminPage() {
                                       </div>
                                       <div className="space-y-2">
                                         <Label htmlFor="edit-category">Categoría</Label>
-                                        <Input
+                                        <select
                                           id="edit-category"
                                           value={editingProduct.categoria}
                                           onChange={(e) =>
@@ -498,7 +506,13 @@ export default function AdminPage() {
                                             })
                                           }
                                           required
-                                        />
+                                          className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                        >
+                                          <option value="">Selecciona una categoría</option>
+                                          <option value="Notebooks">Notebooks</option>
+                                          <option value="PCs desktop">PCs desktop</option>
+                                          <option value="Lavarropas">Lavarropas</option>
+                                        </select>
                                       </div>
                                       <div className="space-y-2">
                                         <Label htmlFor="edit-description">Descripción</Label>
@@ -522,6 +536,7 @@ export default function AdminPage() {
                                               src={editingProduct.imagen || "/placeholder.svg"}
                                               alt="Vista previa"
                                               fill
+                                              sizes="(max-width: 768px) 100vw, 64px"
                                               className="object-cover"
                                             />
                                           </div>

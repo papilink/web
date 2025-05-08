@@ -3,9 +3,9 @@ import { db } from '../lib/db';
 async function main() {
   // Crear categorías
   const categorias = [
-    { nombre: 'Electrónica', descripcion: 'Productos electrónicos y gadgets' },
-    { nombre: 'Hogar', descripcion: 'Artículos para el hogar' },
-    { nombre: 'Ropa', descripcion: 'Vestimenta y accesorios' }
+    { nombre: 'Notebooks', descripcion: 'Laptops y notebooks portátiles' },
+    { nombre: 'PCs desktop', descripcion: 'Computadoras de escritorio' },
+    { nombre: 'Lavarropas', descripcion: 'Lavarropas y electrodomésticos de lavado' }
   ];
 
   for (const categoria of categorias) {
@@ -17,39 +17,50 @@ async function main() {
   // Crear productos
   const productos = [
     {
-      nombre: 'Smartphone X',
-      descripcion: 'Teléfono de última generación',
+      nombre: 'Notebook ThinkPad E14',
+      descripcion: 'Notebook Lenovo ThinkPad E14 con Intel Core i5, 16GB RAM, 512GB SSD',
       precio: 599.99,
       stock: 10,
-      categoria: 'Electrónica',
+      categoria: 'Notebooks',
       imagen: '/images/placeholder.jpg'
     },
     {
-      nombre: 'Laptop Pro',
-      descripcion: 'Portátil para profesionales',
+      nombre: 'PC Gamer Pro',
+      descripcion: 'PC Desktop gaming con RTX 3060, Ryzen 5, 16GB RAM',
       precio: 1299.99,
       stock: 5,
-      categoria: 'Electrónica',
+      categoria: 'PCs desktop',
       imagen: '/images/placeholder.jpg'
     },
     {
-      nombre: 'Aspiradora Smart',
-      descripcion: 'Aspiradora robótica inteligente',
+      nombre: 'Lavarropas Automático 8kg',
+      descripcion: 'Lavarropas automático con 8kg de capacidad, múltiples programas',
       precio: 299.99,
       stock: 8,
-      categoria: 'Hogar',
+      categoria: 'Lavarropas',
       imagen: '/images/placeholder.jpg'
     }
   ];
 
   for (const producto of productos) {
+    // Primero buscar o crear la categoría
+    const categoria = await db.categoria.upsert({
+      where: { nombre: producto.categoria },
+      update: {},
+      create: {
+        nombre: producto.categoria,
+        descripcion: `Categoría ${producto.categoria}`
+      }
+    });
+
+    // Luego crear el producto con la referencia a la categoría
     await db.producto.create({
       data: {
         nombre: producto.nombre,
         descripcion: producto.descripcion,
         precio: producto.precio,
         stock: producto.stock,
-        categoria: producto.categoria,
+        categoriaId: categoria.id,
         imagen: producto.imagen
       }
     });

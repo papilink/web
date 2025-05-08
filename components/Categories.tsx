@@ -1,26 +1,20 @@
 const categories = [
   {
     id: 1,
-    name: "Lavarropas",
-    icon: "🧺", // Puedes cambiar por el ícono que prefieras
-    href: "/categoria/lavarropas"
-  },
-  {
-    id: 2,
     name: "Notebooks",
     icon: "💻",
     href: "/categoria/notebooks"
   },
   {
-    id: 3,
-    name: "Computadora PC",
+    id: 2,
+    name: "PCs desktop",
     icon: "🖥️",
-    href: "/categoria/computadora-pc"
+    href: "/categoria/pcs-desktop"
   },
   {
-    id: 4,
-    name: "Varios",
-    icon: "📦",
-    href: "/categoria/varios"
+    id: 3,
+    name: "Lavarropas",
+    icon: "🧺",
+    href: "/categoria/lavarropas"
   }
 ];

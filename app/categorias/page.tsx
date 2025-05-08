@@ -29,35 +29,41 @@ const categories = [
     description: "Ver todos los productos disponibles",
   },
   {
-    name: "Muebles",
-    value: "muebles",
-    description: "Muebles para el hogar",
-    icon: "🪑",
+    name: "Notebooks",
+    value: "notebooks",
+    description: "Laptops y notebooks portátiles",
+    icon: "💻",
   },
   {
-    name: "Iluminación",
-    value: "iluminacion",
-    description: "Lámparas y accesorios de iluminación",
-    icon: "💡",
+    name: "PCs desktop",
+    value: "pcs-desktop",
+    description: "Computadoras de escritorio",
+    icon: "🖥️",
   },
   {
-    name: "Decoración",
-    value: "decoracion",
-    description: "Artículos decorativos",
-    icon: "🎨",
-  },
-  {
-    name: "Electrónica",
-    value: "electronica",
-    description: "Dispositivos y accesorios electrónicos",
-    icon: "📱",
+    name: "Lavarropas",
+    value: "lavarropas",
+    description: "Lavarropas y electrodomésticos de lavado",
+    icon: "🧺",
   },
 ]
+
+interface Product {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  precio: number;
+  precioOriginal?: number;
+  porcentajeDescuento?: number;
+  stock: number;
+  categoria: string;
+  imagen: string;
+}
 
 export default function CategoriesPage() {
   const { products, loading } = useProducts()
   const [activeProducts, setActiveProducts] = useState(products)
-  const [selectedProduct, setSelectedProduct] = useState(null)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [viewMode, setViewMode] = useState("grid")
   const [activeCategory, setActiveCategory] = useState("todos")
@@ -107,7 +113,7 @@ export default function CategoriesPage() {
     setActiveProducts(filtered)
   }, [activeCategory, searchQuery, sortOrder, products])
 
-  const openProductModal = useCallback((product) => {
+  const openProductModal = useCallback((product: Product) => {
     setSelectedProduct(product)
     setIsModalOpen(true)
   }, [])
